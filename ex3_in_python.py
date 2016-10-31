@@ -63,9 +63,9 @@ class datas2: # splitted datas
 		self.testset = datas()
 		self.scale = None
 
-	def load(self): 
-		self.raw.X = np.genfromtxt('res/X.csv', delimiter=',')
-		self.raw.y = np.genfromtxt('res/y.csv', delimiter=',')
+	def load(self, directory): 
+		self.raw.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
+		self.raw.y = np.genfromtxt(directory + '/y.csv', delimiter=',')
 		self.raw.y = int_to_array_bool(self.raw.y)
 
 	def rescale(self): 

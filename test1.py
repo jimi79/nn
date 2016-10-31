@@ -1,7 +1,7 @@
 import ex3_in_python as e
 from importlib import *
 d=e.datas2() 
-d.load() # enter filename here
+d.load('res1')
 d.split(4500,250)
 d.split()
 s=d.train(0,5000,10)
