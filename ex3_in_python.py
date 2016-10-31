@@ -150,6 +150,8 @@ class datas2: # splitted datas
 		syn0 = s['syn0']
 		syn1 = s['syn1']
 		X = add_ones(X)
+		print(X)
+		print(X.shape)
 		z1 = np.dot(X, syn0)
 		a1 = add_ones(expit(z1))
 		z2 = np.dot(a1, syn1)
