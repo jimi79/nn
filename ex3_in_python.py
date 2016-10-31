@@ -68,13 +68,16 @@ class datas2: # splitted datas
 		self.raw.y = np.genfromtxt(directory + '/y.csv', delimiter=',')
 		self.raw.y = int_to_array_bool(self.raw.y)
 
-	def rescale(self): 
+	def defscale(self):
 		self.scale = scale()
 		self.scale.min = self.raw.X.min()
-		self.raw.X = self.raw.X - self.scale.min
 		self.scale.max = self.raw.X.max()
-		self.raw.X = self.raw.X / self.scale.max
-		self.raw.X = self.raw.X * 2 - 1 
+
+	def rescale(self, data): 
+		data = data - self.scale.min
+		data = data / self.scale.max
+		data = data * 2 - 1 
+		return data
 
 	def unscale(self, datas):
 		return (datas + 1) / 2 * self.scale.max + self.scale.min
@@ -100,14 +103,13 @@ class datas2: # splitted datas
 		y = self.trainset.y
 		m = X.shape[0]
 		syn0 = 2*np.random.random((X.shape[1],25)) - 1 
-		syn1 = 2*np.random.random((26,10)) - 1
+		syn1 = 2*np.random.random((26,y.shape[1])) - 1
 		error=999999
 		for cpt in range(max_cpt): 
 			z1 = np.dot(X, syn0)
 			a1 = add_ones(expit(z1))
 			z2 = np.dot(a1, syn1)
 			a2 = expit(z2)
-# annoying, i had a2 = 0 (or 1), and thus log failed
 			np.seterr(divide='ignore')
 			J = np.sum((-y * np.log(a2) - (1 - y) * np.log(1 - a2))) / m; 
 			np.seterr(divide='warn')
@@ -152,11 +154,11 @@ class datas2: # splitted datas
 		a1 = add_ones(expit(z1))
 		z2 = np.dot(a1, syn1)
 		a2 = expit(z2) 
-		if self.scale != None:
-			a2 = self.unscale(a2) 
+		#if self.scale != None:
+		#	a2 = self.unscale(a2) 
 		return a2
 
-	def print(self, val): # val = self.trainset[0] for example
+	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
 		for i in a:
 			for j in i:
