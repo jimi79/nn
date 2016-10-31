@@ -12,6 +12,7 @@
 import numpy as np
 import math
 from scipy.special import expit
+import sys
 
 # we'll have an object, that will be called nn_params
 # inside, we got raw, train, cv, shift, lambda, min_J, max_cpt, synapses. But we don't send that object directly to the train function
@@ -38,6 +39,11 @@ def add_ones(X):
 def sigmoidGradient(X):
 	g=expit(X) 
 	return g*(1-g); 
+
+class network:
+	def __init__(self):
+		self.val = [] # an array of matrixes
+
 
 class datas:
 	def __init__(self, X = np.zeros((1,1)), y = np.zeros((1,1))):
@@ -121,16 +127,21 @@ class datas2: # splitted datas
 				a2 = a2 >= 0.5
 				act = array_to_int(a2)
 				y2 = array_to_int(y)
-				oks = act == y2
-				ratio = np.sum(oks) / y2.shape[0] 
+				res = act == y2
+				errs = np.nonzero(1-res)[0]
+				ratio = 1 - (errs.shape[0] / y2.shape[0])
 				print("J = %f" % J)
 				print("ratio = %f" % ratio)
 				print("cpt = %i" % cpt)
 				print(y2[0:30])
 				print(act[0:30])
+				#if errs.shape[0] > 0:
+				#	err = errs[0]
+				#	self.print(self.trainset.X[err])
+				#	print("Expected : %i" % (y2[err] + 1)) # because our array goes from 0 to 9 
 				if ratio == 1:
-					break
-
+					break 
+				# i would like to locate the first wrong one, and display it in ascii art, and then print what the computer thought it was 
 		return {'syn0':syn0, 'syn1':syn1} # should be a list here, that i will be able to used in the calcul function
 
 	def calcul(self, X, s):
@@ -144,7 +155,16 @@ class datas2: # splitted datas
 		if self.scale != None:
 			a2 = self.unscale(a2) 
 		return a2
-	
+
+	def print(self, val): # val = self.trainset[0] for example
+		a = val.reshape(20,20) > 0.5
+		for i in a:
+			for j in i:
+				if j == True:
+					sys.stdout.write("#")
+				else:
+					sys.stdout.write(".")
+			print("") 
 
 	class results:
 		def __init__(self):
@@ -169,6 +189,6 @@ class datas2: # splitted datas
 		r.ratio = np.sum(r.oks) / m
 		return r
 
-
+			
 		
 
