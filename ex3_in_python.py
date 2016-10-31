@@ -113,7 +113,7 @@ class datas2: # splitted datas
 			np.seterr(divide='ignore')
 			J = np.sum((-y * np.log(a2) - (1 - y) * np.log(1 - a2))) / m; 
 			np.seterr(divide='warn')
-			if J < min_J:
+			if J <= min_J:
 				break
 			s2 = a2 - y 
 			s1 = np.dot(s2,syn1.T) * (a1 * (1 - a1))
@@ -137,13 +137,9 @@ class datas2: # splitted datas
 				print("cpt = %i" % cpt)
 				print(y2[0:30])
 				print(act[0:30])
-				#if errs.shape[0] > 0:
-				#	err = errs[0]
-				#	self.print(self.trainset.X[err])
-				#	print("Expected : %i" % (y2[err] + 1)) # because our array goes from 0 to 9 
-				if ratio == 1:
-					break 
-				# i would like to locate the first wrong one, and display it in ascii art, and then print what the computer thought it was 
+				#if ratio == 1:
+				#	break 
+# very wrong, a NN can be all right, but from just a little bit margin, and not able to generalize
 		return {'syn0':syn0, 'syn1':syn1} # should be a list here, that i will be able to used in the calcul function
 
 	def calcul(self, X, s):
@@ -196,3 +192,4 @@ class datas2: # splitted datas
 			
 		
 
+# make an object of synapses, an array for the data, and a function load and save, so we can save a given state. because it takes some time to run
