@@ -97,42 +97,81 @@ class datas2: # splitted datas
 		self.cvset = datas(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
 		self.testset = datas(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
 
-	def train(self, min_J, max_cpt, l): # and after that, it will take an array as a neural network, once i've played enough with it
-		np.random.seed 
-		X = add_ones(self.trainset.X)
+	class layer:
+		def __init__(self):
+			z = None
+			a = None
+			s = None
+			d = None
+
+	class syn:
+		def __init__(self):
+			self.val = None
+			self.val = None
+
+
+	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
+		countlayers = len(syns)
+		if X != None: 
+			datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+			datalayers[0].a = add_ones(X) # first activation is X. 
+
+		for i in range(len(syns)):
+			if i > 0: # we don't add ones each time for X
+				datalayers[i].a = add_ones(datalayers[i].a)
+			datalayers[i+1].z = np.dot(datalayers[i].a, syns[i].val)
+			datalayers[i+1].a = expit(datalayers[i+1].z) 
+		return(datalayers[-1].a)
+
+	def BP(self, y, datalayers, syns):
+		datalayers[-1].s = datalayers[-1].a - y
+		print(datalayers[-1].s)
+		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
+			#a = add_ones(datalayers[i].a)
+			s = datalayers[i+1].s
+			if i < len(datalayers) - 2:
+				s = s[:,1:]
+			s = s.dot(syns[i].val.T)
+			s = s * (datalayers[i].a * (1 - datalayers[i].a))
+			datalayers[i].s = s 
+
+		for i in range(len(datalayers) - 2, -1, -1):
+			#a = add_ones(a)
+			syns[i].d = datalayers[i].a.T.dot(datalayers[i+1].s) 
+			if i < len(datalayers) - 2:
+				syns[i].d = syns[i].d[:,1:]
+# TODO: don't forget the regul
+			#print(syns[i].d.mean())
+			syns[i].val -= syns[i].d
+
+	def train(self, desc, min_J, max_cpt, l): # desc is only for the hidden layers 
+		np.random.seed()
 		y = self.trainset.y
-		m = X.shape[0]
-		syn0 = 2*np.random.random((X.shape[1],25)) - 1 
-		syn1 = 2*np.random.random((26,y.shape[1])) - 1
+		desc.append(y.shape[1])
+		countlayers = len(desc) 
+		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+		datalayers[0].a = self.trainset.X # first activation is X. 
+		m = datalayers[0].a.shape[0] 
+		fl = datalayers[0].a.shape[1]
+		syns = [self.syn() for i in range(countlayers)] 
+		for i in range(len(desc)): 
+			syns[i].val = 2*np.random.random((fl + 1,desc[i])) - 1
+			fl = desc[i]
 		error=999999
+		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
 		for cpt in range(max_cpt): 
-			z1 = np.dot(X, syn0)
-			a1 = add_ones(expit(z1))
-			z2 = np.dot(a1, syn1)
-			a2 = expit(z2)
+			self.FP(datalayers, syns) # will update a 
 			np.seterr(divide='ignore')
-			J = np.sum((-y * np.log(a2) - (1 - y) * np.log(1 - a2))) / m; 
+			J = np.sum((-y * np.log(datalayers[countlayers].a) - (1 - y) * np.log(1 - datalayers[countlayers].a))) / m; 
+#TODO J seems to be wrong
 			np.seterr(divide='warn')
 			if J <= min_J:
-				break
-			s2 = a2 - y 
-			s1 = np.dot(s2,syn1.T) * (a1 * (1 - a1))
-			s1 = s1[:,1:] 
-			print("-")
-			print(a1.T.shape)
-			print(s2.shape)
-			d2 = a1.T.dot(s2)
-			print(d2.shape)
-			d1 = X.T.dot(s1) 
-			d2[1:,] += l * syn1[1:,] / m;
-			d1[1:,] += l * syn0[1:,] / m; 
-			syn1 -= d2 / m
-			syn0 -= d1 / m 
-
+				break 
+			self.BP(y, datalayers, syns) 
 			if (cpt % 100 == 0):
-				a2 = a2 >= 0.5
-				act = array_to_int(a2)
 				y2 = array_to_int(y)
+				act = datalayers[-1].a >= 0.5
+				act = array_to_int(act)
 				res = act == y2
 				errs = np.nonzero(1-res)[0]
 				ratio = 1 - (errs.shape[0] / y2.shape[0])
@@ -143,22 +182,8 @@ class datas2: # splitted datas
 				print(act[0:30])
 				#if ratio == 1:
 				#	break 
-# very wrong, a NN can be all right, but from just a little bit margin, and not able to generalize
-		return {'syn0':syn0, 'syn1':syn1} # should be a list here, that i will be able to used in the calcul function
 
-	def calcul(self, X, s):
-		syn0 = s['syn0']
-		syn1 = s['syn1']
-		X = add_ones(X)
-		print(X)
-		print(X.shape)
-		z1 = np.dot(X, syn0)
-		a1 = add_ones(expit(z1))
-		z2 = np.dot(a1, syn1)
-		a2 = expit(z2) 
-		#if self.scale != None:
-		#	a2 = self.unscale(a2) 
-		return a2
+		return syns
 
 	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
@@ -176,13 +201,16 @@ class datas2: # splitted datas
 			self.oks = 0
 			self.ratio = 0
 
-	def check(self, datas, s): # datas is the type. Will return the cost function, and the number of different values
-														# r should be in the object maybe. or not
-		m = datas.X.shape[0]
-		act = self.calcul(datas.X, s)
-		act = np.array(act)
+	def check(self, datas, syns): # datas is the type. Will return the cost function, and the number of different values
+														# r should be in the object maybe. or not 
+		countlayers = len(syns) 
+		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+		datalayers[0].a = add_ones(datas.X) # first activation is X. 
+		act = self.FP(datalayers, syns) # will update a 
 		y = datas.y
+		m = datas.X.shape[0]
 		J = np.sum((-y * np.log(act) - (1 - y) * np.log(1 - act))) / m; 
+#TODO : J seems to be wrong
 
 		r = self.results()
 		r.J = J
