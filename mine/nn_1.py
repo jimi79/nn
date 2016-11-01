@@ -165,29 +165,26 @@ class datas2: # splitted datas
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
 		oldacts = np.zeros(display_size)
+		y2 = binary_to_int(y)
+		y2s = binary_to_int(y[0:display_size])
 		for cpt in range(max_cpt): 
 			self.FP(datalayers, syns) # will update a 
 			np.seterr(divide='ignore')
 			J = np.sum((-y * np.log(datalayers[countlayers].a) - (1 - y) * np.log(1 - datalayers[countlayers].a))) / m; 
-#TODO J seems to be wrong
 			np.seterr(divide='warn')
 			if J <= min_J:
 				break 
 			self.BP(y, datalayers, syns, m, l) 
-
-			act = datalayers[-1].a >= 0.5
-			act = binary_to_int(act)
-			acts = act[0:display_size]
-			y2 = binary_to_int(y)
-			y2s = y2[0:display_size]
-
+			acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
 			if (not np.array_equal(acts, oldacts)):
 				print("-------")
 				print(' '.join(["{0:06d}".format(i) for i in y2s]))
 				print(' '.join(["{0:06d}".format(i) for i in acts]))
-				oldacts = act
+				oldacts = acts
 
-			if (cpt % 100 == 0):
+			if (cpt % 1000 == 0): 
+				act = datalayers[-1].a >= 0.5
+				act = binary_to_int(act) 
 				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point
 				ratio = (oks / m)
 				print("J = %f" % J)
