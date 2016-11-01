@@ -28,7 +28,7 @@ def convertytoS(out, ds_out):
 def datas():
 	y = []
 	count = 10000
-	maxv = 1000
+	maxv = 100
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
@@ -46,7 +46,7 @@ def datas():
 def build_csv():
 	X, y = datas()
 	Xc = convertXtoS(X, 16) 
-	yc = convertytoS(y, 32) 
+	yc = convertytoS(y, 16) 
 	np.savetxt('Xd.csv', X, fmt='%s')
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('X.csv', Xc, fmt='%s')
@@ -56,12 +56,18 @@ def train():
 	d=n.datas2() 
 	d.load('.')
 	d.split()
-	s=d.train([100, 50, 25], 0.01, 10000, 1)
+	s=d.train([48, 48, 48], 0.01, 100000, 1)
 	return d, s
 
 def example():
 	build_csv()
 	d, s = train()
-	n.binary_to_int( d.FP(None, s, np.array([convertXtoI([5,2,3], 8)])) >= 0.5)
 	return d, s
 
+def test(d, s, a, b, c):
+	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 16)])) >= 0.5)
+
+
+# syntax
+# d, s = example()
+# test(d, s, 12, 13, 14) # will tell what it thinks about that

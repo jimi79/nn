@@ -119,7 +119,7 @@ class datas2: # splitted datas
 
 	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
 		countlayers = len(syns)
-		if X != None: 
+		if not (X is None): 
 			datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 			datalayers[0].a = add_ones(X) # first activation is X. 
 
@@ -164,7 +164,7 @@ class datas2: # splitted datas
 			fl = desc[i]
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
-		diff = np.zeros(display_size)
+		oldact = np.zeros(display_size)
 		for cpt in range(max_cpt): 
 			self.FP(datalayers, syns) # will update a 
 			np.seterr(divide='ignore')
@@ -178,13 +178,12 @@ class datas2: # splitted datas
 			act = datalayers[-1].a[0:display_size,] >= 0.5
 			act = binary_to_int(act)
 			y2 = binary_to_int(y[0:display_size,])
-			diff2 = act == y2 
 
-			if (not np.array_equal(diff2, diff)):
+			if (not np.array_equal(act, oldact)):
 				print("-------")
 				print(y2)
 				print(act)
-				diff = diff2
+				oldact = act
 
 
 			if (cpt % 100 == 0):
