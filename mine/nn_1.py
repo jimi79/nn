@@ -164,7 +164,7 @@ class datas2: # splitted datas
 			fl = desc[i]
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
-		oldact = np.zeros(display_size)
+		oldacts = np.zeros(display_size)
 		for cpt in range(max_cpt): 
 			self.FP(datalayers, syns) # will update a 
 			np.seterr(divide='ignore')
@@ -175,21 +175,21 @@ class datas2: # splitted datas
 				break 
 			self.BP(y, datalayers, syns, m, l) 
 
-			act = datalayers[-1].a[0:display_size,] >= 0.5
+			act = datalayers[-1].a >= 0.5
 			act = binary_to_int(act)
-			y2 = binary_to_int(y[0:display_size,])
+			acts = act[0:display_size]
+			y2 = binary_to_int(y)
+			y2s = y2[0:display_size]
 
-			if (not np.array_equal(act, oldact)):
+			if (not np.array_equal(acts, oldacts)):
 				print("-------")
-				print(y2)
-				print(act)
-				oldact = act
-
+				print(y2s)
+				print(acts)
+				oldacts = act
 
 			if (cpt % 100 == 0):
-				res = act == y2
-				errs = np.nonzero(1-res)[0]
-				ratio = 1 - (errs.shape[0] / m)
+				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point
+				ratio = (oks / m)
 				print("J = %f" % J)
 				print("ratio = %f" % ratio)
 				print("cpt = %i" % cpt)

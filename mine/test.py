@@ -33,7 +33,7 @@ def datas():
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
 		c = random.randrange(1,maxv)
-		d = a + b
+		d = a * b + c
 		X1 = [a, b, c]
 		if i == 0:
 			X = np.array([X1])
@@ -46,7 +46,7 @@ def datas():
 def build_csv():
 	X, y = datas()
 	Xc = convertXtoS(X, 16) 
-	yc = convertytoS(y, 16) 
+	yc = convertytoS(y, 32) 
 	np.savetxt('Xd.csv', X, fmt='%s')
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('X.csv', Xc, fmt='%s')
