@@ -7,7 +7,7 @@ d.defscale()
 
 d.raw.X = d.rescale(d.raw.X)
 d.split()
-s=d.train([25], 0.01, 5, 10)
+s=d.train([100, 50, 25], 0.01, 10000, 10)
 #print("--- check")
 #r=d.check(d.cvset, s)
 #print("ratio on cv = %f" % r.ratio)

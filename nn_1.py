@@ -123,11 +123,9 @@ class datas2: # splitted datas
 			datalayers[i+1].a = expit(datalayers[i+1].z) 
 		return(datalayers[-1].a)
 
-	def BP(self, y, datalayers, syns):
+	def BP(self, y, datalayers, syns, m):
 		datalayers[-1].s = datalayers[-1].a - y
-		print(datalayers[-1].s)
 		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
-			#a = add_ones(datalayers[i].a)
 			s = datalayers[i+1].s
 			if i < len(datalayers) - 2:
 				s = s[:,1:]
@@ -141,8 +139,7 @@ class datas2: # splitted datas
 			if i < len(datalayers) - 2:
 				syns[i].d = syns[i].d[:,1:]
 # TODO: don't forget the regul
-			#print(syns[i].d.mean())
-			syns[i].val -= syns[i].d
+			syns[i].val -= syns[i].d / m
 
 	def train(self, desc, min_J, max_cpt, l): # desc is only for the hidden layers 
 		np.random.seed()
@@ -167,7 +164,7 @@ class datas2: # splitted datas
 			np.seterr(divide='warn')
 			if J <= min_J:
 				break 
-			self.BP(y, datalayers, syns) 
+			self.BP(y, datalayers, syns, m) 
 			if (cpt % 100 == 0):
 				y2 = array_to_int(y)
 				act = datalayers[-1].a >= 0.5
