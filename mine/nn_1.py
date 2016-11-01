@@ -183,8 +183,8 @@ class datas2: # splitted datas
 
 			if (not np.array_equal(acts, oldacts)):
 				print("-------")
-				print(y2s)
-				print(acts)
+				print(' '.join(["{0:06d}".format(i) for i in y2s]))
+				print(' '.join(["{0:06d}".format(i) for i in acts]))
 				oldacts = act
 
 			if (cpt % 100 == 0):

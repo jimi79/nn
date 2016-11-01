@@ -56,7 +56,7 @@ def train():
 	d=n.datas2() 
 	d.load('.')
 	d.split()
-	s=d.train([48, 48, 48], 0.01, 100000, 1)
+	s=d.train([32, 32], 0.01, 100000, 1)
 	return d, s
 
 def example():
