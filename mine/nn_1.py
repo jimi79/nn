@@ -33,6 +33,13 @@ def array_to_int(val):
 	l=np.array(range(val.shape[1])) 
 	return np.array([np.int(sum(a * l)) for a in val])
 
+def int_to_binary(y, size):
+	f = "{0:0" + str(size) + "b}"
+	return np.array([list(f.format(x)) for x in y])
+
+def binary_to_int(y): 
+	return [int(''.join([str(int(bool(b))) for b in a]),2) for a in y]
+
 def add_ones(X): 
 	return np.concatenate((np.array([1 for b in range(X.shape[0])])[None].T,X),1) 
 	
@@ -66,7 +73,7 @@ class datas2: # splitted datas
 	def load(self, directory): 
 		self.raw.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
 		self.raw.y = np.genfromtxt(directory + '/y.csv', delimiter=',')
-		self.raw.y = int_to_array_bool(self.raw.y)
+		#self.raw.y = int_to_array_bool(self.raw.y)
 
 	def defscale(self):
 		self.scale = scale()
@@ -123,7 +130,7 @@ class datas2: # splitted datas
 			datalayers[i+1].a = expit(datalayers[i+1].z) 
 		return(datalayers[-1].a)
 
-	def BP(self, y, datalayers, syns, m):
+	def BP(self, y, datalayers, syns, m, l):
 		datalayers[-1].s = datalayers[-1].a - y
 		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
 			s = datalayers[i+1].s
@@ -137,11 +144,12 @@ class datas2: # splitted datas
 			#a = add_ones(a)
 			syns[i].d = datalayers[i].a.T.dot(datalayers[i+1].s) 
 			if i < len(datalayers) - 2:
-				syns[i].d = syns[i].d[:,1:]
-# TODO: don't forget the regul
+				syns[i].d = syns[i].d[:,1:] 
+			syns[i].d += l * syns[i].val / m;
 			syns[i].val -= syns[i].d / m
 
 	def train(self, desc, min_J, max_cpt, l): # desc is only for the hidden layers 
+		display_size = 30
 		np.random.seed()
 		y = self.trainset.y
 		desc.append(y.shape[1])
@@ -156,6 +164,7 @@ class datas2: # splitted datas
 			fl = desc[i]
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
+		diff = np.zeros(display_size)
 		for cpt in range(max_cpt): 
 			self.FP(datalayers, syns) # will update a 
 			np.seterr(divide='ignore')
@@ -164,19 +173,27 @@ class datas2: # splitted datas
 			np.seterr(divide='warn')
 			if J <= min_J:
 				break 
-			self.BP(y, datalayers, syns, m) 
+			self.BP(y, datalayers, syns, m, l) 
+
+			act = datalayers[-1].a[0:display_size,] >= 0.5
+			act = binary_to_int(act)
+			y2 = binary_to_int(y[0:display_size,])
+			diff2 = act == y2 
+
+			if (not np.array_equal(diff2, diff)):
+				print("-------")
+				print(y2)
+				print(act)
+				diff = diff2
+
+
 			if (cpt % 100 == 0):
-				y2 = array_to_int(y)
-				act = datalayers[-1].a >= 0.5
-				act = array_to_int(act)
 				res = act == y2
 				errs = np.nonzero(1-res)[0]
-				ratio = 1 - (errs.shape[0] / y2.shape[0])
+				ratio = 1 - (errs.shape[0] / m)
 				print("J = %f" % J)
 				print("ratio = %f" % ratio)
 				print("cpt = %i" % cpt)
-				print(y2[0:30])
-				print(act[0:30])
 				#if ratio == 1:
 				#	break 
 
