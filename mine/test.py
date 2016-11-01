@@ -6,6 +6,7 @@ import random
 import pdb
 import nn_1 as n
 
+
 def convertXtoS(inp, ds_inp):
 	f = "{0:0" + str(ds_inp) + "b}"
 	X = np.array([','.join(list(''.join([f.format(a) for a in b]))) for b in inp])
@@ -27,13 +28,13 @@ def convertytoS(out, ds_out):
 
 def datas():
 	y = []
-	count = 10000
-	maxv = 100
+	count = 40000 # number of examples i generate
+	maxv = 1000 # max value for a, b and c (let's start slow)
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
 		c = random.randrange(1,maxv)
-		d = a * b + c
+		d = a * b  # the result expected is a+b because i know that works (later will try again somethg more complicated)
 		X1 = [a, b, c]
 		if i == 0:
 			X = np.array([X1])
@@ -42,11 +43,11 @@ def datas():
 		y.append(d) 
 	return X, y
 
-
+# ok ?
 def build_csv():
 	X, y = datas()
-	Xc = convertXtoS(X, 16) 
-	yc = convertytoS(y, 32) 
+	Xc = convertXtoS(X, 32) 
+	yc = convertytoS(y, 64)  # as requested here
 	np.savetxt('Xd.csv', X, fmt='%s')
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('X.csv', Xc, fmt='%s')
@@ -55,8 +56,8 @@ def build_csv():
 def train(): 
 	d=n.datas2() 
 	d.load('.')
-	d.split()
-	s=d.train([64, 64], 0.01, 100000, 1)
+	d.split() # third by default : 1/3 training, 1/3 cv, 1/3 test
+	s=d.train([128, 64, 64], 0.01, 100000, 1) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
 	return d, s
 
 def example():
@@ -65,7 +66,7 @@ def example():
 	return d, s
 
 def test(d, s, a, b, c):
-	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 16)])) >= 0.5)
+	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 32)])) >= 0.5)
 
 
 # syntax

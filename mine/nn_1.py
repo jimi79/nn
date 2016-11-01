@@ -145,7 +145,7 @@ class datas2: # splitted datas
 			syns[i].d = datalayers[i].a.T.dot(datalayers[i+1].s) 
 			if i < len(datalayers) - 2:
 				syns[i].d = syns[i].d[:,1:] 
-			syns[i].d += l * syns[i].val / m;
+			syns[i].d += l * syns[i].val / m; # every synape is updated here
 			syns[i].val -= syns[i].d / m
 
 	def train(self, desc, min_J, max_cpt, l): # desc is only for the hidden layers 
@@ -175,17 +175,28 @@ class datas2: # splitted datas
 			if J <= min_J:
 				break 
 			self.BP(y, datalayers, syns, m, l) 
-			acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
-			if (not np.array_equal(acts, oldacts)):
-				print("-------")
-				print(' '.join(["{0:06d}".format(i) for i in y2s]))
-				print(' '.join(["{0:06d}".format(i) for i in acts]))
-				oldacts = acts
+			#if (not np.array_equal(acts, oldacts)):
+			#	acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
+			#	print("-------")
+			#	print(' '.join(["{0:06d}".format(i) for i in y2s]))
+			#	print(' '.join(["{0:06d}".format(i) for i in acts]))
+			#	oldacts = acts
+# too much lag at distance, i'll just display the ratio of what is wrong vs what is ok
 
-			if (cpt % 1000 == 0): 
+			if (cpt % 100 == 0): 
+
+				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
+				if (not np.array_equal(acts, oldacts)):
+					print("-------")
+					print(' '.join(["{0:06d}".format(i) for i in y2s]))
+					print(' '.join(["{0:06d}".format(i) for i in acts]))
+					oldacts = acts
+
+
+
 				act = datalayers[-1].a >= 0.5
 				act = binary_to_int(act) 
-				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point
+				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point #### here is the ratio of ok results. i display that every 1000 training
 				ratio = (oks / m)
 				print("J = %f" % J)
 				print("ratio = %f" % ratio)
