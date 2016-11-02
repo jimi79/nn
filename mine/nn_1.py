@@ -201,8 +201,8 @@ class datas2: # splitted datas
 				ratio = (oks / m)
 
 				J_cv, oks_cv, ratio_cv = self.check(self.cvset, syns)
-				print("After %i iterations, on training set, J = %d, ratio = %d" % [J, ratio, cpt])
-				print("On cross-validation set, J = %d, ratio = %d" % [J_cv, ratio_cv])
+				print("After %i iterations, on training set, J = %d, ratio = %d" % (J, ratio, cpt))
+				print("On cross-validation set, J = %d, ratio = %d" % (J_cv, ratio_cv))
 
 
 		return syns
