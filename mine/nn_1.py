@@ -148,7 +148,7 @@ class datas2: # splitted datas
 			syns[i].d += l * syns[i].val / m; # every synape is updated here
 			syns[i].val -= syns[i].d / m
 
-	def train(self, desc, min_J, max_cpt, l): # desc is only for the hidden layers 
+	def train(self, desc, min_J, min_J_on_cv, max_cpt, l, syns = None): # desc is only for the hidden layers 
 		display_size = 30
 		np.random.seed()
 		y = self.trainset.y
@@ -158,7 +158,8 @@ class datas2: # splitted datas
 		datalayers[0].a = self.trainset.X # first activation is X. 
 		m = datalayers[0].a.shape[0] 
 		fl = datalayers[0].a.shape[1]
-		syns = [self.syn() for i in range(countlayers)] 
+		if syns is None:
+			syns = [self.syn() for i in range(countlayers)] 
 		for i in range(len(desc)): 
 			syns[i].val = 2*np.random.random((fl + 1,desc[i])) - 1
 			fl = desc[i]
@@ -186,23 +187,22 @@ class datas2: # splitted datas
 			if (cpt % 100 == 0): 
 
 				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
+
 				if (not np.array_equal(acts, oldacts)):
 					print("-------")
 					print(' '.join(["{0:06d}".format(i) for i in y2s]))
 					print(' '.join(["{0:06d}".format(i) for i in acts]))
-					oldacts = acts
-
-
+					oldacts = acts 
 
 				act = datalayers[-1].a >= 0.5
 				act = binary_to_int(act) 
 				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point #### here is the ratio of ok results. i display that every 1000 training
 				ratio = (oks / m)
-				print("J = %f" % J)
-				print("ratio = %f" % ratio)
-				print("cpt = %i" % cpt)
-				#if ratio == 1:
-				#	break 
+
+				J_cv, oks_cv, ratio_cv = self.check(self.cvset, syns)
+				print("After %i iterations, on training set, J = %d, ratio = %d" % [J, ratio, cpt])
+				print("On cross-validation set, J = %d, ratio = %d" % [J_cv, ratio_cv])
+
 
 		return syns
 
@@ -216,12 +216,6 @@ class datas2: # splitted datas
 					sys.stdout.write(".")
 			print("") 
 
-	class results:
-		def __init__(self):
-			self.J = 0
-			self.oks = 0
-			self.ratio = 0
-
 	def check(self, datas, syns): # datas is the type. Will return the cost function, and the number of different values
 														# r should be in the object maybe. or not 
 		countlayers = len(syns) 
@@ -233,14 +227,12 @@ class datas2: # splitted datas
 		J = np.sum((-y * np.log(act) - (1 - y) * np.log(1 - act))) / m; 
 #TODO : J seems to be wrong
 
-		r = self.results()
-		r.J = J
 		act = act >= 0.5
 		act = array_to_int(act)
 		y = array_to_int(y)
-		r.oks = np.sum(act==y)
-		r.ratio = np.sum(r.oks) / m
-		return r
+		oks = np.sum(act==y)
+		ratio = np.sum(oks) / m
+		return J, oks, ratio
 
 			
 		
