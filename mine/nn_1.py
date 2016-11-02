@@ -186,25 +186,19 @@ class datas2: # splitted datas
 # too much lag at distance, i'll just display the ratio of what is wrong vs what is ok
 
 			if (cpt % 100 == 0): 
-
 				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
-
 				if (not np.array_equal(acts, oldacts)):
 					print("-------")
 					print(' '.join(["{0:06d}".format(i) for i in y2s]))
 					print(' '.join(["{0:06d}".format(i) for i in acts]))
 					oldacts = acts 
-
 				act = datalayers[-1].a >= 0.5
 				act = binary_to_int(act) 
 				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point #### here is the ratio of ok results. i display that every 1000 training
-				ratio = (oks / m)
-
+				ratio = (oks / m) 
 				J_cv, oks_cv, ratio_cv = self.check(self.cvset, syns)
-				print("After %i iterations, on training set, J = %d, ratio = %d" % (J, ratio, cpt))
-				print("On cross-validation set, J = %d, ratio = %d" % (J_cv, ratio_cv))
-
-
+				print("After %i iterations, on training set, J = %f, ratio = %f" % (cpt, J, ratio))
+				print("On cross-validation set, J = %f, ratio = %f" % (J_cv, ratio_cv)) 
 		return syns
 
 	def ascii(self, val): # val = self.trainset[0] for example
