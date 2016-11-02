@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 # requierd :
-#apt-get install python-numpy
+#apt-get install python3-numpy
+#apt-get install python3-scipy
 
 
 # redo the digit number recognize in python, with the same number of layer.
