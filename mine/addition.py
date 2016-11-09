@@ -28,8 +28,8 @@ def convertytoS(out, ds_out):
 
 def datas():
 	y = []
-	count = 100000 # number of examples i generate
-	maxv = 1000 # max value for a, b and c (let's start slow)
+	count = 5000 # number of examples i generate
+	maxv = 100 # max value for a, b and c (let's start slow)
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
@@ -46,8 +46,8 @@ def datas():
 # ok ?
 def build_csv():
 	X, y = datas()
-	Xc = convertXtoS(X, 16) 
-	yc = convertytoS(y, 32)  # as requested here
+	Xc = convertXtoS(X, 8) 
+	yc = convertytoS(y, 16)  # as requested here
 	np.savetxt('Xd.csv', X, fmt='%s')
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('X.csv', Xc, fmt='%s')
@@ -57,7 +57,7 @@ def train():
 	d=n.datas2() 
 	d.load('.')
 	d.split() # third by default : 1/3 training, 1/3 cv, 1/3 test
-	s=d.train([48,48,48,48,48], 0.001, 0.01, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
+	s=d.train([96,48], 0.001, 0.01, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
 	return d, s
 
 def example():
@@ -66,7 +66,7 @@ def example():
 	return d, s
 
 def test(d, s, a, b, c):
-	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 16)])) >= 0.5)
+	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 8)])) >= 0.5)
 
 
 # syntax
