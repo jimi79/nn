@@ -14,6 +14,7 @@ import numpy as np
 import math
 from scipy.special import expit
 import sys
+import os
 
 # we'll have an object, that will be called nn_params
 # inside, we got raw, train, cv, shift, lambda, min_J, max_cpt, synapses. But we don't send that object directly to the train function
@@ -53,33 +54,43 @@ class network:
 		self.val = [] # an array of matrixes
 
 
-class datas:
+class oneset:
 	def __init__(self, X = np.zeros((1,1)), y = np.zeros((1,1))):
 		self.X = X
 		self.y = y
+
+	def import_csv(self, directory): 
+		self.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
+		self.y = np.genfromtxt(directory + '/y.csv', delimiter=',') 
 
 class scale:
 	def __init__(self):
 		self.min=0
 		self.max=0 
 
-class datas2: # splitted datas
+class datas: 
+
+	class sets:
+		raw = oneset()
+		trainset = oneset()
+		cvset = oneset()
+		testing = oneset()
+
+	class layer:
+			def __init__(self):
+				z = None # output of the matrice multiplication
+				a = None # after the sigmoid
+				s = None # difference sigma
+				d = None # delta to apply to synapses
+
 	def __init__(self):
-		self.raw = datas()
-		self.trainset = datas()
-		self.cvset = datas()
-		self.testset = datas()
+		self.sets = sets()
 		self.scale = None
 
-	def load(self, directory): 
-		self.raw.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
-		self.raw.y = np.genfromtxt(directory + '/y.csv', delimiter=',')
-		#self.raw.y = int_to_array_bool(self.raw.y)
-
-	def defscale(self):
+	def defscale(self, datas):
 		self.scale = scale()
-		self.scale.min = self.raw.X.min()
-		self.scale.max = self.raw.X.max()
+		self.scale.min = datas.min()
+		self.scale.max = datas.max()
 
 	def rescale(self, data): 
 		data = data - self.scale.min
@@ -105,18 +116,43 @@ class datas2: # splitted datas
 		self.cvset = datas(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
 		self.testset = datas(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
 
-	class layer:
-		def __init__(self):
-			z = None
-			a = None
-			s = None
-			d = None
-
+class syns: 
 	class syn:
 		def __init__(self):
 			self.val = None
-			self.val = None
+			self.diff = None 
 
+	def __init__(self, layers, in_size):  
+		np.random.seed()
+		data.syns = [self.syn() for i in range(len(layers))] 
+		for i in range(len(layers)): 
+			syns[i].val = 2*np.random.random((fl + 1,layers[i])) - 1
+			fl = layers[i] 
+
+class train_params 
+	def __init__(self):
+		self.display_every_n_steps = 100
+		self.save_every_n_steps = 1000
+		self.dataset = None 
+		self.minJ = 0.001
+		self.minJcv = 0.01 
+		self.maxcpt = -1 # handle that case stupid
+		self.l = 3 # lambda default value
+		self.filename = 'temp.dat' # file to save progress (and everythg else)
+		self.progress_display_size = 30
+		self.syns = syns([16, 16]) # default layout
+
+class nn_exploit: 
+	def __init__(self): 
+		self.params = train_params()
+		self.datas = datas() 
+
+	def load(self, filename):
+		blah = piclkle.load(open(filename, 'rb'))
+
+	def save(self, filename):
+		blah = {'datas': datas, params: params}
+		pikle.dump(blah, open(filename, 'wb'))
 
 	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
 		countlayers = len(syns)
@@ -149,43 +185,35 @@ class datas2: # splitted datas
 			syns[i].d += l * syns[i].val / m; # every synape is updated here
 			syns[i].val -= syns[i].d / m
 
-	def train(self, desc, min_J, min_J_on_cv, max_cpt, l, syns = None): # desc is only for the hidden layers 
-		display_size = 30
-		np.random.seed()
-		y = self.trainset.y
+	def train(self): # desc is only for the hidden layers 
+	
+		if os.path.exists(params.filename):
+			self.load(params.filename) 
+		else: 
+			pass # synapses are initialized with default value earlier
+
+		y = self.datas.trainset.y
 		desc.append(y.shape[1])
 		countlayers = len(desc) 
 		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 		datalayers[0].a = self.trainset.X # first activation is X. 
 		m = datalayers[0].a.shape[0] 
-		fl = datalayers[0].a.shape[1]
-		if syns is None:
-			syns = [self.syn() for i in range(countlayers)] 
-		for i in range(len(desc)): 
-			syns[i].val = 2*np.random.random((fl + 1,desc[i])) - 1
-			fl = desc[i]
+		fl = datalayers[0].a.shape[1] 
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
 		oldacts = np.zeros(display_size)
 		y2 = binary_to_int(y)
 		y2s = binary_to_int(y[0:display_size])
-		for cpt in range(max_cpt): 
-			self.FP(datalayers, syns) # will update a 
+		cpt = 0
+		while ((cpt < max_cpt) or (max_cpt == -1)):
+			self.FP(datalayers, self.syns) # will update a 
 			np.seterr(divide='ignore')
 			J = np.sum((-y * np.log(datalayers[countlayers].a) - (1 - y) * np.log(1 - datalayers[countlayers].a))) / m; 
 			np.seterr(divide='warn')
 			if J <= min_J:
 				break 
-			self.BP(y, datalayers, syns, m, l) 
-			#if (not np.array_equal(acts, oldacts)):
-			#	acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
-			#	print("-------")
-			#	print(' '.join(["{0:06d}".format(i) for i in y2s]))
-			#	print(' '.join(["{0:06d}".format(i) for i in acts]))
-			#	oldacts = acts
-# too much lag at distance, i'll just display the ratio of what is wrong vs what is ok
-
-			if (cpt % 100 == 0): 
+			self.BP(y, datalayers, self.syns, m, l) 
+			if (cpt % display_every_n_steps == 0): 
 				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
 				if (not np.array_equal(acts, oldacts)):
 					print("-------")
@@ -199,7 +227,10 @@ class datas2: # splitted datas
 				J_cv, oks_cv, ratio_cv = self.check(self.cvset, syns)
 				print("After %i iterations, on training set, J = %f, ratio = %f" % (cpt, J, ratio))
 				print("On cross-validation set, J = %f, ratio = %f" % (J_cv, ratio_cv)) 
-		return syns
+			if (cpt % save_every_n_steps == 0): 
+				print("saved")
+				self.save(self.params.filename) 
+		return self.syns
 
 	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
@@ -220,16 +251,10 @@ class datas2: # splitted datas
 		y = datas.y
 		m = datas.X.shape[0]
 		J = np.sum((-y * np.log(act) - (1 - y) * np.log(1 - act))) / m; 
-#TODO : J seems to be wrong
-
+#TODO : J seems to be wrong 
 		act = act >= 0.5
 		act = array_to_int(act)
 		y = array_to_int(y)
 		oks = np.sum(act==y)
 		ratio = np.sum(oks) / m
 		return J, oks, ratio
-
-			
-		
-
-# make an object of synapses, an array for the data, and a function load and save, so we can save a given state. because it takes some time to run

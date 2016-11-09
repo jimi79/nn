@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-
 import numpy as np
 import random
 import pdb
@@ -28,13 +27,16 @@ def convertytoS(out, ds_out):
 
 def datas():
 	y = []
-	count = 100000 # number of examples i generate
-	maxv = 1000 # max value for a, b and c (let's start slow)
+	count = 1000 # number of examples i generate # <- 1000 exemples. cad le NN va prendre 1000 exemples, utilisé les poids de ses neurones (le premier tour les poids sont juste random). pour chaque exemple il sort le résultat, et pour les 1000 on regarde la diff, et on applique la diff sur les poids, de tel sorte que à chq tour il prévoit kkchose de plus proche de ce qui est attendu
+# je te déatil après si tu veux
+
+	maxv = 10 # max value for a, b and c (let's start slow) # valeur max pour a, b et c
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
 		c = random.randrange(1,maxv)
-		d = a + b +c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+		d = a + b  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+# le résultat attendu : d= a+b (d c'est le résultat)
 		X1 = [a, b, c]
 		if i == 0:
 			X = np.array([X1])
@@ -46,8 +48,8 @@ def datas():
 # ok ?
 def build_csv():
 	X, y = datas()
-	Xc = convertXtoS(X, 16) 
-	yc = convertytoS(y, 32)  # as requested here
+	Xc = convertXtoS(X, 8) 
+	yc = convertytoS(y, 8)  # as requested here
 	np.savetxt('Xd.csv', X, fmt='%s')
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('X.csv', Xc, fmt='%s')
@@ -57,7 +59,7 @@ def train():
 	d=n.datas2() 
 	d.load('.')
 	d.split() # third by default : 1/3 training, 1/3 cv, 1/3 test
-	s=d.train([48,48,48,48,48], 0.001, 0.01, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
+	s=d.train([48,48,48,48,48], 0.005, 0.05, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
 	return d, s
 
 def example():
@@ -66,7 +68,7 @@ def example():
 	return d, s
 
 def test(d, s, a, b, c):
-	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 16)])) >= 0.5)
+	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 8)])) >= 0.5)
 
 
 # syntax
