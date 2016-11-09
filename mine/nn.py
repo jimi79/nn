@@ -54,7 +54,7 @@ class network:
 		self.val = [] # an array of matrixes
 
 
-class oneset:
+class Set:
 	def __init__(self, X = np.zeros((1,1)), y = np.zeros((1,1))):
 		self.X = X
 		self.y = y
@@ -63,20 +63,14 @@ class oneset:
 		self.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
 		self.y = np.genfromtxt(directory + '/y.csv', delimiter=',') 
 
-class scale:
+class Scale:
 	def __init__(self):
 		self.min=0
 		self.max=0 
 
-class datas: 
+class Datas: 
 
-	class sets:
-		raw = oneset()
-		trainset = oneset()
-		cvset = oneset()
-		testing = oneset()
-
-	class layer:
+	class Layer:
 			def __init__(self):
 				z = None # output of the matrice multiplication
 				a = None # after the sigmoid
@@ -84,8 +78,11 @@ class datas:
 				d = None # delta to apply to synapses
 
 	def __init__(self):
-		self.sets = sets()
 		self.scale = None
+		self.raw = Set()
+		self.trainset = Set()
+		self.cvset = Set()
+		self.testing = Set() 
 
 	def defscale(self, datas):
 		self.scale = scale()
@@ -112,24 +109,24 @@ class datas:
 			cv_part = cpt
 		test_part = c.shape[0] - train_part - cv_part 
 
-		self.trainset = datas(c[0:train_part,0:-y_size], c[0:train_part,-y_size:]) 
-		self.cvset = datas(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
-		self.testset = datas(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
+		self.trainset = Set(c[0:train_part,0:-y_size], c[0:train_part,-y_size:]) 
+		self.cvset = Set(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
+		self.testset = Set(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
 
-class syns: 
-	class syn:
+class Syns: 
+	class Syn:
 		def __init__(self):
 			self.val = None
 			self.diff = None 
 
-	def __init__(self, layers, in_size):  
+	def __init__(self, layers, in_size):   # my synapse object is messy, with layer and stuff, and check line 198, i have no idea what it is about
 		np.random.seed()
-		data.syns = [self.syn() for i in range(len(layers))] 
+		self.syns = [self.Syn() for i in range(len(layers))] 
 		for i in range(len(layers)): 
-			syns[i].val = 2*np.random.random((fl + 1,layers[i])) - 1
-			fl = layers[i] 
+			self.syns[i].val = 2*np.random.random((in_size + 1,layers[i])) - 1
+			in_size = layers[i] 
 
-class train_params 
+class NN:
 	def __init__(self):
 		self.display_every_n_steps = 100
 		self.save_every_n_steps = 1000
@@ -140,12 +137,12 @@ class train_params
 		self.l = 3 # lambda default value
 		self.filename = 'temp.dat' # file to save progress (and everythg else)
 		self.progress_display_size = 30
-		self.syns = syns([16, 16]) # default layout
+		self.syns = None
 
-class nn_exploit: 
+class Train: 
 	def __init__(self): 
-		self.params = train_params()
-		self.datas = datas() 
+		self.nn = NN()
+		self.datas = Datas() 
 
 	def load(self, filename):
 		blah = piclkle.load(open(filename, 'rb'))
@@ -153,6 +150,10 @@ class nn_exploit:
 	def save(self, filename):
 		blah = {'datas': datas, params: params}
 		pikle.dump(blah, open(filename, 'wb'))
+
+	def init_syns(self, size):
+		size.append(self.datas.trainset.y.shape[1]) 
+		self.nn.syns = Syns(size, self.datas.trainset.X.shape[1])
 
 	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
 		countlayers = len(syns)
@@ -187,14 +188,13 @@ class nn_exploit:
 
 	def train(self): # desc is only for the hidden layers 
 	
-		if os.path.exists(params.filename):
-			self.load(params.filename) 
+		if os.path.exists(self.nn.filename):
+			self.load(self.nn.filename) 
 		else: 
 			pass # synapses are initialized with default value earlier
 
 		y = self.datas.trainset.y
-		desc.append(y.shape[1])
-		countlayers = len(desc) 
+		countlayers = len(self.nn.syns.syns) # we count the number of synapses to define our laters. Layers arejust for FP and BP
 		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 		datalayers[0].a = self.trainset.X # first activation is X. 
 		m = datalayers[0].a.shape[0] 
@@ -229,7 +229,7 @@ class nn_exploit:
 				print("On cross-validation set, J = %f, ratio = %f" % (J_cv, ratio_cv)) 
 			if (cpt % save_every_n_steps == 0): 
 				print("saved")
-				self.save(self.params.filename) 
+				self.save(self.nn.filename) 
 		return self.syns
 
 	def ascii(self, val): # val = self.trainset[0] for example
@@ -258,3 +258,14 @@ class nn_exploit:
 		oks = np.sum(act==y)
 		ratio = np.sum(oks) / m
 		return J, oks, ratio
+
+
+# to use it : 
+# nn.init
+# nn.syns=syns([16,16], 8)
+# nn.train()
+
+# and to reprise : nn.train() should be ok
+# synapses are in TrainParams ... i have no f@#%@ idea where they should be
+# TrainParams shoule be nn, and nn should be train, that train a nn versus datas
+
