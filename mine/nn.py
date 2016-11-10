@@ -10,11 +10,13 @@
 
 # learn to read csv and convert into numpy stuff
 
-import numpy as np
+import json
 import math
+import numpy as np
+import os
+import pickle
 from scipy.special import expit
 import sys
-import os
 
 # we'll have an object, that will be called nn_params
 # inside, we got raw, train, cv, shift, lambda, min_J, max_cpt, synapses. But we don't send that object directly to the train function
@@ -68,14 +70,16 @@ class Scale:
 		self.min=0
 		self.max=0 
 
-class Datas: 
+class Layer:
+	def __init__(self):
+		z = None # output of the matrice multiplication
+		a = None # after the sigmoid
+		s = None # difference sigma
+		d = None # delta to apply to synapses
 
-	class Layer:
-			def __init__(self):
-				z = None # output of the matrice multiplication
-				a = None # after the sigmoid
-				s = None # difference sigma
-				d = None # delta to apply to synapses
+
+
+class Datas: 
 
 	def __init__(self):
 		self.scale = None
@@ -114,12 +118,13 @@ class Datas:
 		self.testset = Set(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
 
 class Syns: 
+
 	class Syn:
 		def __init__(self):
 			self.val = None
 			self.diff = None 
 
-	def __init__(self, layers, in_size):   # my synapse object is messy, with layer and stuff, and check line 198, i have no idea what it is about
+	def __init__(self, layers, in_size):
 		np.random.seed()
 		self.syns = [self.Syn() for i in range(len(layers))] 
 		for i in range(len(layers)): 
@@ -131,9 +136,9 @@ class NN:
 		self.display_every_n_steps = 100
 		self.save_every_n_steps = 1000
 		self.dataset = None 
-		self.minJ = 0.001
-		self.minJcv = 0.01 
-		self.maxcpt = -1 # handle that case stupid
+		self.min_J = 0.001
+		self.min_J_cv = 0.01 
+		self.max_cpt = -1 # handle that case stupid
 		self.l = 3 # lambda default value
 		self.filename = 'temp.dat' # file to save progress (and everythg else)
 		self.progress_display_size = 30
@@ -145,11 +150,15 @@ class Train:
 		self.datas = Datas() 
 
 	def load(self, filename):
-		blah = piclkle.load(open(filename, 'rb'))
+		#blah = json.load(open(filename, 'r'))
+		#self.nn = blah['nn']
+		#self.datas = blah['dats']
+		pass
 
 	def save(self, filename):
-		blah = {'datas': datas, params: params}
-		pikle.dump(blah, open(filename, 'wb'))
+		#blah = {'datas': self.datas, 'nn': self.nn}
+		#json.dump(blah, open(filename, 'w'))
+		pass
 
 	def init_syns(self, size):
 		size.append(self.datas.trainset.y.shape[1]) 
@@ -158,7 +167,7 @@ class Train:
 	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
 		countlayers = len(syns)
 		if not (X is None): 
-			datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+			datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 			datalayers[0].a = add_ones(X) # first activation is X. 
 
 		for i in range(len(syns)):
@@ -195,26 +204,27 @@ class Train:
 
 		y = self.datas.trainset.y
 		countlayers = len(self.nn.syns.syns) # we count the number of synapses to define our laters. Layers arejust for FP and BP
-		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-		datalayers[0].a = self.trainset.X # first activation is X. 
+		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+		datalayers[0].a = self.datas.trainset.X # first activation is X. 
 		m = datalayers[0].a.shape[0] 
 		fl = datalayers[0].a.shape[1] 
 		error=999999
 		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
-		oldacts = np.zeros(display_size)
+		oldacts = np.zeros(self.nn.progress_display_size)
 		y2 = binary_to_int(y)
-		y2s = binary_to_int(y[0:display_size])
+		y2s = binary_to_int(y[0:self.nn.progress_display_size])
 		cpt = 0
-		while ((cpt < max_cpt) or (max_cpt == -1)):
-			self.FP(datalayers, self.syns) # will update a 
+		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
+			cpt = cpt + 1
+			self.FP(datalayers, self.nn.syns.syns) # will update a 
 			np.seterr(divide='ignore')
 			J = np.sum((-y * np.log(datalayers[countlayers].a) - (1 - y) * np.log(1 - datalayers[countlayers].a))) / m; 
 			np.seterr(divide='warn')
-			if J <= min_J:
+			if J <= self.nn.min_J:
 				break 
-			self.BP(y, datalayers, self.syns, m, l) 
-			if (cpt % display_every_n_steps == 0): 
-				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:display_size]) 
+			self.BP(y, datalayers, self.nn.syns.syns, m, self.nn.l) 
+			if (cpt % self.nn.display_every_n_steps == 0): 
+				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:self.nn.progress_display_size]) 
 				if (not np.array_equal(acts, oldacts)):
 					print("-------")
 					print(' '.join(["{0:06d}".format(i) for i in y2s]))
@@ -224,13 +234,13 @@ class Train:
 				act = binary_to_int(act) 
 				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point #### here is the ratio of ok results. i display that every 1000 training
 				ratio = (oks / m) 
-				J_cv, oks_cv, ratio_cv = self.check(self.cvset, syns)
+				J_cv, oks_cv, ratio_cv = self.check(self.datas.cvset, self.nn.syns.syns)
 				print("After %i iterations, on training set, J = %f, ratio = %f" % (cpt, J, ratio))
 				print("On cross-validation set, J = %f, ratio = %f" % (J_cv, ratio_cv)) 
-			if (cpt % save_every_n_steps == 0): 
-				print("saved")
-				self.save(self.nn.filename) 
-		return self.syns
+			#if (cpt % self.nn.save_every_n_steps == 0): 
+			#	print("saved")
+			#	self.save(self.nn.filename) 
+		return self.nn.syns.syns
 
 	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
@@ -245,7 +255,7 @@ class Train:
 	def check(self, datas, syns): # datas is the type. Will return the cost function, and the number of different values
 														# r should be in the object maybe. or not 
 		countlayers = len(syns) 
-		datalayers = [self.layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 		datalayers[0].a = add_ones(datas.X) # first activation is X. 
 		act = self.FP(datalayers, syns) # will update a 
 		y = datas.y

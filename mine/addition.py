@@ -3,7 +3,6 @@
 import numpy as np
 import random
 import pdb
-import nn_1 as n
 
 
 def convertXtoS(inp, ds_inp):
@@ -17,8 +16,7 @@ def convertXtoI(inp, ds_inp): # only one list of integer into an array of values
 	c = []
 	for a in s:
 		c = c + a 
-	return [int(a) for a in c]
-
+	return [int(a) for a in c] 
 
 def convertytoS(out, ds_out):  
 	f = "{0:0" + str(ds_out) + "b}"
@@ -27,10 +25,10 @@ def convertytoS(out, ds_out):
 
 def datas():
 	y = []
-	count = 1000 # number of examples i generate # <- 1000 exemples. cad le NN va prendre 1000 exemples, utilisé les poids de ses neurones (le premier tour les poids sont juste random). pour chaque exemple il sort le résultat, et pour les 1000 on regarde la diff, et on applique la diff sur les poids, de tel sorte que à chq tour il prévoit kkchose de plus proche de ce qui est attendu
+	count = 10000 # number of examples i generate # <- 1000 exemples. cad le NN va prendre 1000 exemples, utilisé les poids de ses neurones (le premier tour les poids sont juste random). pour chaque exemple il sort le résultat, et pour les 1000 on regarde la diff, et on applique la diff sur les poids, de tel sorte que à chq tour il prévoit kkchose de plus proche de ce qui est attendu
 # je te déatil après si tu veux
 
-	maxv = 10 # max value for a, b and c (let's start slow) # valeur max pour a, b et c
+	maxv = 100 # max value for a, b and c (let's start slow) # valeur max pour a, b et c
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
@@ -55,22 +53,7 @@ def build_csv():
 	np.savetxt('X.csv', Xc, fmt='%s')
 	np.savetxt('y.csv', yc, fmt='%s')
 
-def train(): 
-	d=n.datas2() 
-	d.load('.')
-	d.split() # third by default : 1/3 training, 1/3 cv, 1/3 test
-	s=d.train([48,48,48,48,48], 0.005, 0.05, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
-	return d, s
-
 def example():
 	build_csv()
 	d, s = train()
 	return d, s
-
-def test(d, s, a, b, c):
-	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 8)])) >= 0.5)
-
-
-# syntax
-# d, s = example()
-# test(d, s, 12, 13, 14) # will tell what it thinks about that
