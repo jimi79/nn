@@ -25,10 +25,10 @@ def convertytoS(out, ds_out):
 
 def datas():
 	y = []
-	count = 10000 # number of examples i generate # <- 1000 exemples. cad le NN va prendre 1000 exemples, utilisé les poids de ses neurones (le premier tour les poids sont juste random). pour chaque exemple il sort le résultat, et pour les 1000 on regarde la diff, et on applique la diff sur les poids, de tel sorte que à chq tour il prévoit kkchose de plus proche de ce qui est attendu
+	count = 1000 # number of examples i generate # <- 1000 exemples. cad le NN va prendre 1000 exemples, utilisé les poids de ses neurones (le premier tour les poids sont juste random). pour chaque exemple il sort le résultat, et pour les 1000 on regarde la diff, et on applique la diff sur les poids, de tel sorte que à chq tour il prévoit kkchose de plus proche de ce qui est attendu
 # je te déatil après si tu veux
 
-	maxv = 100 # max value for a, b and c (let's start slow) # valeur max pour a, b et c
+	maxv = 20 # max value for a, b and c (let's start slow) # valeur max pour a, b et c
 	for i in range(count):
 		a = random.randrange(1,maxv)
 		b = random.randrange(1,maxv)
