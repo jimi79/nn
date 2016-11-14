@@ -188,8 +188,12 @@ class Train:
 			diffs[i] += l * syns.vals[i] / m; # every synape is updated here
 			syns.vals[i] -= diffs[i] / m
 
+	def cost_function(self, yguess, yexpected, m):
+		 #J = np.sum((-yexpected * np.log(yguess) - (1 - yexpected) * np.log(1 - yguess))) / m # i've got divided by 0 here in log
+		 J = np.sum((yexpected - yguess)**2) / m # i've got divided by 0 here in log 
+		 return J
+
 	def train(self): # desc is only for the hidden layers 
-	
 		self.try_to_load()
 		y = self.datas.trainset.y
 		countlayers = len(self.nn.syns.vals) # we count the number of synapses to define our laters. Layers arejust for FP and BP
@@ -207,7 +211,7 @@ class Train:
 			cpt = cpt + 1
 			self.FP(datalayers, self.nn.syns) # will update a 
 			np.seterr(divide='ignore')
-			J = np.sum((-y * np.log(datalayers[countlayers].a) - (1 - y) * np.log(1 - datalayers[countlayers].a))) / m; 
+			J = self.cost_function(datalayers[countlayers].a, y, m)
 			np.seterr(divide='warn')
 			if J <= self.nn.min_J:
 				break 
@@ -249,8 +253,7 @@ class Train:
 		act = self.FP(datalayers, syns) # will update a 
 		y = datas.y
 		m = datas.X.shape[0]
-		J = np.sum((-y * np.log(act) - (1 - y) * np.log(1 - act))) / m; 
-#TODO : J seems to be wrong 
+		J = self.cost_function(y, act, m)
 		act = act >= 0.5
 		act = array_to_int(act)
 		y = array_to_int(y)
