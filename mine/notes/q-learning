@@ -102,3 +102,44 @@ But the internet algo isn't better, because there is no way that decrease.
 
 the 0-9 is a good example, because a lots of path can leads to 100. And if u play against a bad AI, you can win even if u move from 85 to 88 (instead to 90, which u should do). But after a while it shouldn't work so good.
 It's not a matter of pathes though, because the path is good, it's just not good enough. I should store also the average of win somehow.
+
+
+
+i think average of all goals minus -1. while the official formula is gamma * max. i need a way to compare easily both ways
+
+
+to not remove nn from the algo, store a matrice with values for the best path
+but why not storing just state and their points ? what would be the good reason ?
+
+i need the matrice just to know what is possible to do or not
+then each state has a value, given how far is it from the objective
+
+and that status is updated by what it can lead to
+
+so that, for the 0-9 game, 81 to 90 can lead to 100, but indirectly, 85 can lead to lose (-100), while 81 can't. so 81 should have the highest value, if for each i do the average -1
+
+so, each time i get a question, no matter what, i check what i can do, with the Amatrice (authorized). False is illegal, True is legal.
+Then i multiply by the list of values per status Vlist, but i need to match the order, which can be annoying i guess.
+That's why the matrice is easiest. i just store things. but that's annoying, because the room value being always the same, that means i need to duplicate values.
+
+Ok, i need a list of status, with their weight. obviously, the first one, or first two ones, will be win and lose (if lose is possible).
+then all will be added over time.
+for each, there will be a list of status that can lead to them
+
+so, 
+class status
+	points: integer
+	list of status that can lead to it : list
+
+then, i will need a way to find all status that i can reach from a given point, that will be deduced. maybe i could store the opposite actually
+
+class status
+	code: string
+	points: integer
+	list of status i can reach from here: list (pointers or strings ?)
+
+and each time i update the list, i recalcul the avg -1 to put as points (i still do -1 because if there is only one, then i should remember it's still less good than the win/next status)
+
+
+
+
