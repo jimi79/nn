@@ -51,7 +51,7 @@ def sigmoidGradient(X):
 	g=expit(X) 
 	return g*(1-g); 
 
-class Set:
+class Set: 
 	def __init__(self, X = np.zeros((1,1)), y = np.zeros((1,1))):
 		self.X = X
 		self.y = y
@@ -117,7 +117,7 @@ class Syns:
 		def __init__(self):
 			self.vals = None
 
-	def __init__(self, layers, in_size):
+	def __init__(self, layers=[], in_size=1):
 		np.random.seed()
 		self.vals = [None for i in range(len(layers))]
 		for i in range(len(layers)): 
@@ -147,6 +147,11 @@ class Train:
 	def __init__(self): 
 		self.nn = NN()
 		self.datas = Datas() 
+
+	def try_to_load(self):
+		if os.path.exists(self.nn.filename):
+			print("loading temp synapses values")
+			self.nn.syns.load(self.nn.filename) 
 
 	def init_syns(self, size):
 		size.append(self.datas.trainset.y.shape[1]) 
@@ -185,12 +190,7 @@ class Train:
 
 	def train(self): # desc is only for the hidden layers 
 	
-		if os.path.exists(self.nn.filename):
-			print("loading temp synapses values")
-			self.nn.syns.load(self.nn.filename) 
-		else: 
-			pass # synapses are initialized with default value earlier
-
+		self.try_to_load()
 		y = self.datas.trainset.y
 		countlayers = len(self.nn.syns.vals) # we count the number of synapses to define our laters. Layers arejust for FP and BP
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
@@ -229,7 +229,7 @@ class Train:
 			if (cpt % self.nn.save_every_n_steps == 0): 
 				print("saved")
 				self.nn.syns.save(self.nn.filename) 
-		return self.nn.syns.syns
+		return self.nn.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
