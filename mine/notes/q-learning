@@ -1,0 +1,104 @@
+how to update the best path
+
+
+We got a matrice of states that is like :
+
+A\B  0  1  2  3  4  5 
+	0 -1 -1 -1 -1 -1 -1
+	1 -1 -1 -1 -1 -1 -1
+	2 -1 -1 -1 -1 -1 -1
+	3 -1 -1 -1 -1 -1 -1
+	4 -1 -1 -1 -1 -1 -1
+	5 -1 -1 -1 -1 -1 -1
+
+
+-1 means impossible
+100 means you'll win at first.... after a while, it may change
+any value from 0 to 99 tells you the best path.
+
+first : we don't update nothg if we can't be sure the path from state A to state B is possible
+So, when i go from 2 to 5, even if i win, i don't try to update anythg but 2 to 5.
+Now, if i win, then i put 100 in the cell 2 to 5. It is tempting to put 100 on the whole row, but that is wrong. going from 3 to 5 isn't necesseraly possible. and that matrice tells us what is prefereable, but also what is possible to do or not.
+
+
+
+note : i would like to update with max / number of states, but we can't
+
+
+
+i've got to train my thingy with that :
+
+
+
+possible
+	2:3
+	3:1,4,2
+	4:3,1,0,6
+	0:4
+	1:3:5
+
+5:win
+6:dead
+
+
+
+request(rand(1,4), possible(thatranD)
+result(oldstate, newstate, action(in that case new state), win is 5, lose if 6)
+
+
+
+why max, why times 0.8. i mean that could be just max - 1
+
+-1 = not allowed
+0 = means not interesting
+None should be i don't know yet, and i should prioritize to test that first (unless i prefer some AI that privligize to do what it knows, and not test new stuff, but there is no point)
+
+
+
+
+Le coup du coef veut dire que win = 100. etape b4 win = gamma * 100. etape b4 etape b4 win = gamma * gamma *100
+donc mes vals vont aller genre win = 100, before 80, before 64, etc.
+It's exponential.
+
+But i could do somethg like
+
+win = 100
+b4 win = 100 - 1
+b4 b4 win = 99 - 1 
+etc
+So 100 would be the max value, and also the max number of steps. but i would have to store only integers that way, instead to bother.
+
+I also don't get why they add R each time, and the max goes from 100 to 500.
+
+Interesting, either in their algo or mine, all rooms have the same values. logical indeed.
+
+Thing is, if all rooms have the same value, i don't get the point of storing each value. Better store True False to know if the change from state A to B is possible
+Could as well store the action needed to go from A to B
+
+
+Now, would that work with my game 1-9 ? 
+
+Q : how to pass from A to B. 0 = not possible. otherwise it's the action
+
+
+   0  1  2  3  4  5  6  7  8  9  10  11 etc
+
+0  0  1  2  3  4  5  6  7  8  9
+
+4  0  0  0  0  0  1  2  3  4  5  # remember : 0 not possible
+
+and 100 = win
+
+now, i will call
+
+QL.request(4, 9) (value start is 4, 9 actions possibles (computer doesn't thave to bother what action does what)
+
+
+I'm again removing my NN from the algo. Because the whole idea behind Q leaning is to try any solution possible. Well, NN will help to know from a new state to guess how to go to the best status. I mean, i know i have to try stuff, but shall i try everythg ? i need a factor here. if there is a path that works, then i have to take it.
+Thing is, if i'm fighting against somethg, the path might be too short. Does that mean i will try at random ? or that path will loose value. That's why they add to the current value each time, because paths can change over time.
+If it's about rooms, then of course the best path is always the same. but what if it's not ? i mean if u work against someone else, then you update your path because when u lose, then you remove, but it's an average. one path might be perect at first, then not so good but still ok, etc. Well i have to think about that too now ...
+
+But the internet algo isn't better, because there is no way that decrease.
+
+the 0-9 is a good example, because a lots of path can leads to 100. And if u play against a bad AI, you can win even if u move from 85 to 88 (instead to 90, which u should do). But after a while it shouldn't work so good.
+It's not a matter of pathes though, because the path is good, it's just not good enough. I should store also the average of win somehow.

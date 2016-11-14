@@ -13,7 +13,7 @@ a=nn.Train()
 a.datas.raw.import_csv('./') 
 a.datas.split(random=False)
 a.nn.max_cpt=100000
-a.nn.min_J=0.001
+a.nn.min_J=0
 a.nn.min_J_cv=0.001
 a.init_syns([32,32])
 a.nn.progress_display_size=10
