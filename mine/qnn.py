@@ -8,9 +8,11 @@ import random
 class Qlearning:
 
 	class State:
-		def __init__(self, ident, points=0):
+		def __init__(self, ident, points=None):
 			self.ident=ident # identification of that state
-			self.leans_to=[] # array of states that this one can lead to
+			self.leads_to=[] # array of idents of states that it can lead to (i prefer that that storing the pointer)
+			if points==None: 
+				points=0
 			self.points=points # value of that state 
 
 	def __init__(self):
@@ -21,24 +23,19 @@ class Qlearning:
 
 	def find(self, ident):
 		for i in self.states:
-			print("looking")
-			print(i.ident)
 			if i.ident == ident:
-				print("found")
 				return i # return a state
 				break
 		return None
 
 	def define(self, state, points=None): # can be used to add the win value 
+		print("blah")
 		i=self.find(state)
-		if points!=None:
-			if i!=None:
+		if i!=None:
+			if points!=None:
 				i.points = points
-			else: 
-				self.states.append(self.State(state, points))
-		print("defining")
-		print(state)
-		print(points)
+		else: 
+			self.states.append(self.State(state, points))
 
 	def query(self, state, possible_actions):
 		self.define(state)
@@ -50,24 +47,24 @@ class Qlearning:
 
 
 	def remember(self, old_state, new_state, action):
-# first, if we win, then we write 100 in the new old_state new_state combination
-# if we don't win, then we update the path we took, meaning the old_state / new_state cell with the gamma * max(new_state) row (meaning all possible new states + 1)
-# we do it only here, because we know that going from old to new is possible
-# it's here that we'll reinforce old_state thing
 		self.define(new_state) # we don't know if that new state is good now
-# but we know the old_state has to be updated
 		i=self.find(old_state) # shoulod exists
+
+		if i.leads_to.count(new_state)==0:
+			i.leads_to.append(new_state)
+
 		sumval=0
 		countval=0
-		for j in i.leans_to:
+		for ii in i.leads_to:
+			j=self.find(ii) 
 			sumval+=j.points
 			countval+=1
+
 		if countval!=0: # no idea what this state can lead to so far
-			i.points=sumval/countval-1 # core
-
-# and voila
-
-# i should write why i do that or that
+			i.points=sumval/countval-1 # core # ok, avereage is good if the outcome is random. otherwise it shouldn't be
+			# actually, it depends of the action we picked. if the action leads to two different outcomes, then we average
+# but we take the max for both actions
+# so i may need a matrice after all, that says 'action blah and status blah leads to blah2, or blah3, depends' 
 
 	def save(self, filename):
 		pass # default filename will be /tmp/qnn.tmp.dat
@@ -94,3 +91,8 @@ class translate: # there will be two of them, one to translate state, one for ac
 # note : if i use command line, then i'll use also an interface to translate a state in string into a bool. same for actions possibles, that will be another list of parameters
 # that will be another object anyway, but i'll need it soon though
 
+
+
+#todo
+# what if going from state1 to state2 costs more than going from state1 to state3, if both lead to state4 ? I need an optionnal matrice of costs too. so that when i do -1, it could be another value
+# but that may be for later.
