@@ -143,3 +143,18 @@ and each time i update the list, i recalcul the avg -1 to put as points (i still
 
 
 
+
+-------
+
+possible path 
+/ = or
+
+
+win=1,1
+lost=2,2
+
+0,0 -> if 0 then 0,1 if 1 then 1,0  
+0,1 -> if 0 then 0,2 if 1 then 0,1 
+0,2 -> 1,1 
+1,0 -> if 0 then  1,1/2,2 (75% chances going on 1,1)
+

@@ -18,6 +18,7 @@ import pickle
 from scipy.special import expit
 import sys
 
+
 # we'll have an object, that will be called nn_params
 # inside, we got raw, train, cv, shift, lambda, min_J, max_cpt, synapses. But we don't send that object directly to the train function
 # raw is a datas class 
@@ -59,11 +60,6 @@ class Set:
 	def import_csv(self, directory): 
 		self.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
 		self.y = np.genfromtxt(directory + '/y.csv', delimiter=',') 
-
-class Scale:
-	def __init__(self):
-		self.min=0
-		self.max=0 
 
 class Layer:
 	def __init__(self):
