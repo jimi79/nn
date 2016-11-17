@@ -6,7 +6,7 @@ import os
 import pdb
 import random
 
-count=2000
+count=10000
 maxval=20
 binsize=8
 
