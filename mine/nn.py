@@ -154,6 +154,7 @@ class Train:
 		self.nn.syns = Syns(size, self.datas.trainset.X.shape[1])
 
 	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
+# example : nn.binary_to_int( a.FP(None, a.nn.syns, a.datas.trainset.X)>0.5)[0:10] to get the 10 first estimations
 		countlayers = len(syns.vals)
 		if not (X is None): 
 			datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0

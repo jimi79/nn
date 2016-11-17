@@ -6,8 +6,8 @@ import os
 import pdb
 import random
 
-count=10000
-maxval=20
+count=5000
+maxval=12
 binsize=8
 
 
@@ -36,7 +36,7 @@ def datas(count, maxval, binsize):
 		a = random.randrange(1,maxval)
 		b = random.randrange(1,maxval)
 		c = random.randrange(1,maxval)
-		d = a + b +c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+		d = a + b + c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
 # le résultat attendu : d= a+b (d c'est le résultat)
 		X1 = [a, b, c]
 		if i == 0:
@@ -66,7 +66,7 @@ def example(count, maxval, binsize):
 
 
 def test(train, va, vb, vc):
-	return nn.binary_to_int(train.FP(None, train.nn.syns, np.array([addition.convertXtoI([va,vb,vc], binsize)])) >= 0.5)
+	return nn.binary_to_int(train.FP(None, train.nn.syns, np.array([np.array([va,vb,vc])/maxval]))>0.5) # without outside [] it's just a list, not an array. i mean shape is (3,), not (1,3), so FP cannot process it
 
 a=nn.Train()
 if not os.path.exists('X.csv'):
@@ -74,10 +74,10 @@ if not os.path.exists('X.csv'):
 	build_csv(count, maxval, binsize)
 a.datas.raw.import_csv('./') 
 a.datas.split(random=False)
-a.nn.max_cpt=100000
+a.nn.max_cpt=10000
 a.nn.min_J=0
 a.nn.min_J_cv=0.001
-a.init_syns([32,32,16])
+a.init_syns([32,16])
 a.nn.filename='nnint.tmp'
 a.nn.progress_display_size=10
 a.try_to_load()
