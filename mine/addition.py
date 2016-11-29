@@ -6,8 +6,8 @@ import os
 import pdb
 import random
 
-count=5000
-maxval=12
+count=50000
+maxval=25
 binsize=8
 
 
@@ -74,8 +74,8 @@ a.datas.split(random=False)
 a.nn.max_cpt=10000
 a.nn.min_J=0
 a.nn.min_J_cv=0.001
-a.init_syns([32,16])
-a.nn.filename='nnint.tmp'
+a.init_syns([32,32,16])
+a.nn.filename='nn.tmp'
 a.nn.progress_display_size=10
 a.try_to_load()
 
