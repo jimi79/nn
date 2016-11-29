@@ -140,7 +140,8 @@ class NN:
 		self.min_J = 0.001
 		self.min_J_cv = 0.01 
 		self.max_cpt = -1 # handle that case stupid
-		self.l = 3 # lambda default value
+		self.lambda_=3 # lambda default value
+		self.alpha=1 #alpha default value
 		self.filename = 'nn.tmp.dat' # file to save progress (and everythg else)
 		self.progress_display_size = 30
 		self.syns = None
@@ -159,23 +160,22 @@ class Train:
 		size.append(self.datas.trainset.y.shape[1]) 
 		self.nn.syns = Syns(size, self.datas.trainset.X.shape[1])
 
-	def FP(self, datalayers = None, syns = None, X=None): # X optionnal, in case we just want to run once 
-# example : nn.binary_to_int( a.FP(None, a.nn.syns, a.datas.trainset.X)>0.5)[0:10] to get the 10 first estimations
+	def FP(self, X):
+		syns=self.nn.syns
 		countlayers = len(syns.vals)
-		if not (X is None): 
-			datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-			datalayers[0].a = add_ones(X) # first activation is X. 
-
+		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+		datalayers[0].a = X 
 		for i in range(len(syns.vals)):
-			if i > 0: # we don't add ones each time for X
-				datalayers[i].a = add_ones(datalayers[i].a)
+			datalayers[i].a = add_ones(datalayers[i].a)
 			datalayers[i+1].z = np.dot(datalayers[i].a, syns.vals[i])
 			datalayers[i+1].a = expit(datalayers[i+1].z) 
 		#return(datalayers[-1].a)
 		return(datalayers) # will be used for the BP
 
-	def BP(self, y, datalayers, syns, m, lambda_, alpha=1):
+	def BP(self, y, datalayers):
+		m=y.shape[0]
 		datalayers[-1].s = datalayers[-1].a - y
+		syns=self.nn.syns
 		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
 			s = datalayers[i+1].s
 			if i < len(datalayers) - 2:
@@ -189,21 +189,19 @@ class Train:
 			diffs[i] = datalayers[i].a.T.dot(datalayers[i+1].s) 
 			if i < len(datalayers) - 2:
 				diffs[i] = diffs[i][:,1:] 
-			diffs[i] += lambda_ * syns.vals[i] / m; # every synape is updated here
-			syns.vals[i] -= alpha * (diffs[i] / m)
+			diffs[i] += self.nn.lambda_ * syns.vals[i] / m; # every synape is updated here
+			syns.vals[i] -= self.nn.alpha * (diffs[i] / m)
 
-	def cost_function(self, yguess, yexpected, m):
-		 #J = np.sum((-yexpected * np.log(yguess) - (1 - yexpected) * np.log(1 - yguess))) / m # i've got divided by 0 here in log
-		 J = np.sum((yexpected - yguess)**2) / m # i've got divided by 0 here in log 
-		 return J
+	def cost_function(self, yguess, yexpected):
+		m=yguess.shape[0] 
+		#J = np.sum((-yexpected * np.log(yguess) - (1 - yexpected) * np.log(1 - yguess))) / m # i've got divided by 0 here in log
+		J = np.sum((yexpected - yguess)**2) / m # i've got divided by 0 here in log 
+		return J
 
 	def train(self): # desc is only for the hidden layers 
 		self.try_to_load()
 		y = self.datas.trainset.y
-		#m = datalayers[0].a.shape[0] 
-		#fl = datalayers[0].a.shape[1] 
 		error=999999
-		#datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
 		oldacts = np.zeros(self.nn.progress_display_size)
 		cpt = 0
 		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
@@ -213,7 +211,7 @@ class Train:
 			self.BP(y, datalayers)  # removed m, because that's dedudnant with a count of y or datalayers, remvoed l because in object self or params.
 			if self.nn.check_every_n_steps!=None: 
 				if (cpt % self.nn.check_every_n_steps == 0): 
-					J = self.cost_function(datalayers[countlayers].a, y, m)
+					J = self.cost_function(datalayers[-1].a, y)
 					np.seterr(divide='warn')
 					if J <= self.nn.min_J:
 						break 
@@ -234,21 +232,16 @@ class Train:
 					sys.stdout.write(".")
 			print("") 
 
-	def check(self, datas, syns): # datas is the type. Will return the cost function, and the number of different values
+	def check(self, datas): # datas is the type. Will return the cost function, and the number of different values
 														# r should be in the object maybe. or not 
+		syns=self.nn.syns
 		countlayers = len(syns.vals) 
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-		datalayers[0].a = add_ones(datas.X) # first activation is X. 
-		act = self.FP(datalayers, syns) # will update a 
+		datalayers = self.FP(datas.X) # will update a 
 		y = datas.y
 		m = datas.X.shape[0]
-		J = self.cost_function(y, act, m)
-		act = act >= 0.5
-		act = array_to_int(act)
-		y = array_to_int(y)
-		oks = np.sum(act==y)
-		ratio = np.sum(oks) / m
-		return J, oks, ratio
+		J = self.cost_function(y, datalayers[-1].a)
+		return J
 
 
 # to use it : 

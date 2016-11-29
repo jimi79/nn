@@ -83,3 +83,4 @@ a.try_to_load()
 
 print("either do s = a.train()")
 print("or test(a, 1, 2, 3)")
+
