@@ -6,9 +6,9 @@ import os
 import pdb
 import random
 
-count=50000
+count=5000
 maxval=25
-binsize=8
+binsize=7
 
 
 
@@ -46,32 +46,15 @@ def datas(count, maxval, binsize):
 		y.append(d) 
 	return X, y
 
-def build_csv():
-	X, y = datas()
-	Xc = convertXtoS(X, 8) 
-	yc = convertytoS(y, 16)  # as requested here
+def build_csv(count, maxval, binsize):
+	X, y = datas(count, maxval, binsize)
+	Xc = convertXtoS(X, binsize) 
+	yc = convertytoS(y, binsize)
 	np.savetxt('Xd.csv', X, fmt='%s')
-	np.savetxt('Xd.csv', X, fmt='%s')
+	np.savetxt('yd.csv', y, fmt='%s')
 	np.savetxt('X.csv', Xc, fmt='%s')
 	np.savetxt('y.csv', yc, fmt='%s')
 
-<<<<<<< HEAD
-def example(count, maxval, binsize):
-=======
-def train(): 
-	d=n.datas2() 
-	d.load('.')
-	d.split() # third by default : 1/3 training, 1/3 cv, 1/3 test
-	s=d.train([96,48], 0.001, 0.01, 10000000, 3) # the layout is here, 2 hidden layers of 64 neuros. last layer is to go from 64 to the expected 9 bits
-	return d, s
-
-def example():
->>>>>>> 5988da70b61c876ec009e0e920dd2a39f75317b2
-	build_csv()
-	d, s = train()
-	return d, s
-
-<<<<<<< HEAD
 def test(train, va, vb, vc):
 	return nn.binary_to_int(train.FPSimple(np.array([convertXtoI([va,vb,vc], binsize)])) >= 0.5)
 
@@ -86,14 +69,7 @@ a.nn.min_J=0
 a.nn.min_J_cv=0.001
 a.init_syns([32,32,16])
 a.nn.filename='nn.tmp'
-a.nn.progress_display_size=10
 a.try_to_load()
-
-
-=======
-def test(d, s, a, b, c):
-	return n.binary_to_int( d.FP(None, s, np.array([convertXtoI([a,b,c], 8)])) >= 0.5)
->>>>>>> 5988da70b61c876ec009e0e920dd2a39f75317b2
 
 print("either do s = a.train()")
 print("or test(a, 1, 2, 3)")

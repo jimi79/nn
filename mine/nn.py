@@ -142,9 +142,9 @@ class NN:
 		self.max_cpt = -1 # handle that case stupid
 		self.lambda_=3 # lambda default value
 		self.alpha=1 #alpha default value
-		self.filename = 'nn.tmp.dat' # file to save progress (and everythg else)
-		self.progress_display_size = 30
-		self.syns = None
+		self.filename='nn.tmp.dat' # file to save progress (and everythg else)
+		self.verbose=True
+		self.syns=None
 
 class Train: 
 	def __init__(self): 
@@ -205,7 +205,6 @@ class Train:
 		self.try_to_load()
 		y = self.datas.trainset.y
 		error=999999
-		oldacts = np.zeros(self.nn.progress_display_size)
 		cpt = 0
 		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
 			cpt = cpt + 1
