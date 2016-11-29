@@ -1,11 +1,6 @@
 #!/usr/bin/python3
 
-
-# first, we got each state that got a weight
-# then, each state can lead to another state, depending on a choice, and a ratio of chances
-
-# ok, first : cost
-
+import nn
 
 
 class State:
@@ -14,47 +9,40 @@ class State:
 		if points==None:
 			points=0 #not good, not bad
 		self.points=points
-		self.possibles_actions=[] # array of indexes of actions here. 
-
-class Action: # action going west in city != action going west in forest. So an action is basically an action in a given state
-	def __init__(self):
-		self.leads_to=[] #one action can lead to several outcomes. Here, there is also an index
-		self.leads_to_count=[] # array of count of each time the outcome happened for that given action
-		self.tot_count # numer of times that action was called
-		self.cost=1 # cost value, default is 1
-
-#core : avereage of each action, then max of all possibles actions, minus cost. Cost is initialized by the 'remember' function (default 1, cannot be 0 i guess, otherwise there is no reason to move.)
-	
 
 class Qlearning():
-	def __init__(self):
-		self.states=[]
-		self.actions=[]
-
-	def find_state(self, ident):
-		for i in range(len(self.states)):
-			if self.states[i].ident==ident:
-				return i
-				break
-		return -1
-	
-	def find_action(self, ident): # not sure i will need it here though
-		for i in range(len(self.actions)):
-			if self.actions[i].ident==ident:
-				return i
-				break
-		return -1
-
-	def define_actions(self, ident, actions, weight=None): # weight not handled yet. see note1
-		act=self.find_action(ident)
-		if act==None:
-			act=Action()
-		act.leads_to=actions # i except a list here
-
-	def define_points(self, ident, points=None): 
-		
+	def __init__(self, max_state, max_action):
+# max_action is all state included. it's just to prepare a input for the NN large enough
+		self.max_state=max_state
+		self.max_action=max_action 
+		self.nn=nn.Train()
+		self.nn.init_syns([self.max_state + self.max_action,self.max_state]) # one hidden layer
+		self.nn.display_every_n_steps=None
 
 
+# define the max state value, the max action value.
+# for the 0-9 game, max state is 100 (val from 0 to 99)
+# and max action is from 1 to 10
+# each is a bool 1 or 1
+# new state outputting of the NN is the same size of the in value, so in is 110, out is 100.
 
 
-#note1 : weight will be a list of weight for each action, that i will use to substract to the value if i use it, so i can tell which is better, accounting that information
+	def pick_action(state, list_actions):
+		# we try each actions against the NN, and then pick the one that lead to the status giving the more points
+
+		a=np.zeros(list_actions)
+		output={}
+		for i in range(list_actions):
+			b=a
+			b[i]=1
+			input_=np.concat(state, b)
+			output[i]=np.FP(input_)
+# and we ask the NN what can goes out with that
+
+
+
+
+
+	def learn(oldstate, action, newstate): # will have to concatenate oldstate and action, that are an array of booleans. Not sure how to do that though. Plus the action list may change from time to time.
+# so action should be an integer, and i should adapt the size so it can handle the max action number
+# and action here is the max value

@@ -120,6 +120,12 @@ class Syns:
 			self.vals[i] = 2*np.random.random((in_size + 1,layers[i])) - 1
 			in_size = layers[i] 
 
+		countlayers = len(self.vals) # we count the number of synapses to define our laters. Layers arejust for FP and BP
+		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
+
+
+
+
 	def save(self, filename):
 		pickle.dump(self.vals, open(filename, "wb"))
 
@@ -128,7 +134,7 @@ class Syns:
 
 class NN:
 	def __init__(self):
-		self.display_every_n_steps = 100
+		self.check_every_n_steps = 100
 		self.save_every_n_steps = 1000
 		self.dataset = None 
 		self.min_J = 0.001
@@ -165,9 +171,10 @@ class Train:
 				datalayers[i].a = add_ones(datalayers[i].a)
 			datalayers[i+1].z = np.dot(datalayers[i].a, syns.vals[i])
 			datalayers[i+1].a = expit(datalayers[i+1].z) 
-		return(datalayers[-1].a)
+		#return(datalayers[-1].a)
+		return(datalayers) # will be used for the BP
 
-	def BP(self, y, datalayers, syns, m, l):
+	def BP(self, y, datalayers, syns, m, lambda_, alpha=1):
 		datalayers[-1].s = datalayers[-1].a - y
 		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
 			s = datalayers[i+1].s
@@ -182,8 +189,8 @@ class Train:
 			diffs[i] = datalayers[i].a.T.dot(datalayers[i+1].s) 
 			if i < len(datalayers) - 2:
 				diffs[i] = diffs[i][:,1:] 
-			diffs[i] += l * syns.vals[i] / m; # every synape is updated here
-			syns.vals[i] -= diffs[i] / m
+			diffs[i] += lambda_ * syns.vals[i] / m; # every synape is updated here
+			syns.vals[i] -= alpha * (diffs[i] / m)
 
 	def cost_function(self, yguess, yexpected, m):
 		 #J = np.sum((-yexpected * np.log(yguess) - (1 - yexpected) * np.log(1 - yguess))) / m # i've got divided by 0 here in log
@@ -193,40 +200,25 @@ class Train:
 	def train(self): # desc is only for the hidden layers 
 		self.try_to_load()
 		y = self.datas.trainset.y
-		countlayers = len(self.nn.syns.vals) # we count the number of synapses to define our laters. Layers arejust for FP and BP
-		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-		datalayers[0].a = self.datas.trainset.X # first activation is X. 
-		m = datalayers[0].a.shape[0] 
-		fl = datalayers[0].a.shape[1] 
+		#m = datalayers[0].a.shape[0] 
+		#fl = datalayers[0].a.shape[1] 
 		error=999999
-		datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
+		#datalayers[0].a = add_ones(datalayers[0].a) # first activation is X. 
 		oldacts = np.zeros(self.nn.progress_display_size)
-		y2 = binary_to_int(y)
-		y2s = binary_to_int(y[0:self.nn.progress_display_size])
 		cpt = 0
 		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
 			cpt = cpt + 1
-			self.FP(datalayers, self.nn.syns) # will update a 
+			datalayers=self.FP(self.datas.trainset.X) # will update a 
 			np.seterr(divide='ignore')
-			J = self.cost_function(datalayers[countlayers].a, y, m)
-			np.seterr(divide='warn')
-			if J <= self.nn.min_J:
-				break 
-			self.BP(y, datalayers, self.nn.syns, m, self.nn.l) 
-			if (cpt % self.nn.display_every_n_steps == 0): 
-				acts = binary_to_int((datalayers[-1].a >= 0.5)[0:self.nn.progress_display_size]) 
-				if (not np.array_equal(acts, oldacts)):
-					print("-------")
-					print(' '.join(["{0:06d}".format(i) for i in y2s]))
-					print(' '.join(["{0:06d}".format(i) for i in acts]))
-					oldacts = acts 
-				act = datalayers[-1].a >= 0.5
-				act = binary_to_int(act) 
-				oks = sum([ act==y2 for (act,y2) in zip(act, y2)] ) # i don't have nparrays at that point #### here is the ratio of ok results. i display that every 1000 training
-				ratio = (oks / m) 
-				J_cv, oks_cv, ratio_cv = self.check(self.datas.cvset, self.nn.syns)
-				print("After %i iterations, on training set, J = %f, ratio = %f" % (cpt, J, ratio))
-				print("On cross-validation set, J = %f, ratio = %f" % (J_cv, ratio_cv)) 
+			self.BP(y, datalayers)  # removed m, because that's dedudnant with a count of y or datalayers, remvoed l because in object self or params.
+			if self.nn.check_every_n_steps!=None: 
+				if (cpt % self.nn.check_every_n_steps == 0): 
+					J = self.cost_function(datalayers[countlayers].a, y, m)
+					np.seterr(divide='warn')
+					if J <= self.nn.min_J:
+						break 
+					J_cv = self.check(self.datas.cvset) 
+					print("Jtrain = %f, Jcv = %f" % (J, J_cv))
 			if (cpt % self.nn.save_every_n_steps == 0): 
 				print("saved")
 				self.nn.syns.save(self.nn.filename) 

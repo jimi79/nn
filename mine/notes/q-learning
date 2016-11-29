@@ -158,3 +158,53 @@ lost=2,2
 0,2 -> 1,1 
 1,0 -> if 0 then  1,1/2,2 (75% chances going on 1,1)
 
+
+-----------
+ok
+my NN can be handy here, when from state x, there are two actions like 'fight' and 'flee', and the status outcome can be guessed by sending the state x + some context stuff.
+
+So my qlearning state would be the life point, and actions can be fight and flee, and outcome is a new life point. contexte there would be what weapons i do have, and what the other have. 
+
+But that is wrong, because i'm mixing up stuff : the qlearning statistics of an outcome, and the nn that can guess given a context. Therefore, it should be up to the nn to guess what the outcome will be. but that has sense only if the outcome is based on some values, which isn't always the case.
+
+Thing is, a NN cannot handle randomness. It will average. I think that will look like 'use NN', which means saving/loading. pfff i don't know how to do that on a general level. That will have to wait.
+
+Nah, i need that NN, even to play the 0-9 game. And if there are random, well, that should work out just fine, if alpha is correctly set to update the NN.
+
+But that is a lot of work.
+
+No, i don't need NN for 0-9 game. Because best path should stand out no matter what.
+
+So i need to get to the bottom of that. 
+
+And the NN will at some point remplace the rest. maybe only when multiples path are possible, for one action. But that is also wrong. 
+NN is needed if the initial status is not defined completely.
+Or to optimize stuff.
+
+The nn could be used for any case though. that would change the decision i make.
+
+But i don't get it, because if i generalize, then i don't have an array anymore.
+
+
+The NN should have input and an action, and output the expected outcome. And from there, we would try any action possible.
+
+And update the NN each time with BP (with an alpha this time).
+
+So we remove the all action list. it will be given as a list but we don't store it. we just use it to go through each possibilities so the NN tell us what will comes out.
+But there i forgot the randomess. I mean how can my NN tell me what happens after i pick 4 in the 0-9 game, for each possibilities it has. because the opponent will pick a random number (or not).
+Actually Octave isn't supposed to pick at random, and my NN will detect it.
+
+So i should have it play against the best opponent at first.
+
+I need what then...
+
+----------------
+state1.list -> list of states
+state1.points -> calculated based on max of states it can leads to - 1 
+and when i ask the NN with each poss, i will pick the outcome that it guess with the most points.
+
+easy.
+
+so, state 1 stored as a bool, and actions are from 0 to 9 (each is a bool)
+
+

@@ -36,7 +36,7 @@ def datas(count, maxval, binsize):
 		a = random.randrange(1,maxval)
 		b = random.randrange(1,maxval)
 		c = random.randrange(1,maxval)
-		d = a + b + c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+		d = a + b +c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
 # le résultat attendu : d= a+b (d c'est le résultat)
 		X1 = [a, b, c]
 		if i == 0:
@@ -49,11 +49,12 @@ def datas(count, maxval, binsize):
 # ok ?
 def build_csv(count, maxval, binsize):
 	X, y = datas(count, maxval, binsize)
-	Xc = X/maxval 
+	Xc = convertXtoS(X, binsize)  # as requested here
 	yc = convertytoS(y, binsize)  # as requested here
+# note : we can change here to use integer instead of binaries as input.
 	np.savetxt('yd.csv', y, fmt='%s') 
 	np.savetxt('Xd.csv', X, fmt='%s')
-	np.savetxt('X.csv', Xc, fmt='%s',delimiter=',')
+	np.savetxt('X.csv', Xc, fmt='%s')
 	np.savetxt('y.csv', yc, fmt='%s')
 
 def example(count, maxval, binsize):
@@ -61,12 +62,8 @@ def example(count, maxval, binsize):
 	d, s = train()
 	return d, s
 
-
-
-
-
 def test(train, va, vb, vc):
-	return nn.binary_to_int(train.FP(None, train.nn.syns, np.array([np.array([va,vb,vc])/maxval]))>0.5) # without outside [] it's just a list, not an array. i mean shape is (3,), not (1,3), so FP cannot process it
+	return nn.binary_to_int(train.FP(None, train.nn.syns, np.array([convertXtoI([va,vb,vc], binsize)])) >= 0.5)
 
 a=nn.Train()
 if not os.path.exists('X.csv'):
