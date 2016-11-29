@@ -172,6 +172,9 @@ class Train:
 		#return(datalayers[-1].a)
 		return(datalayers) # will be used for the BP
 
+	def FPSimple(self, X): # result is only the last layer, not the intermediate results
+		return self.FP(X)[-1].a
+
 	def BP(self, y, datalayers):
 		m=y.shape[0]
 		datalayers[-1].s = datalayers[-1].a - y

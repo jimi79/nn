@@ -63,7 +63,7 @@ def example(count, maxval, binsize):
 	return d, s
 
 def test(train, va, vb, vc):
-	return nn.binary_to_int(train.FP(None, train.nn.syns, np.array([convertXtoI([va,vb,vc], binsize)])) >= 0.5)
+	return nn.binary_to_int(train.FPSimple(np.array([convertXtoI([va,vb,vc], binsize)])) >= 0.5)
 
 a=nn.Train()
 if not os.path.exists('X.csv'):
