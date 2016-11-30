@@ -6,11 +6,9 @@ import os
 import pdb
 import random
 
-count=5000
+count=50000
 maxval=25
-binsize=7
-
-
+binsize=16
 
 def convertXtoS(inp, ds_inp):
 	f = "{0:0" + str(ds_inp) + "b}"
@@ -36,7 +34,7 @@ def datas(count, maxval, binsize):
 		a = random.randrange(1,maxval)
 		b = random.randrange(1,maxval)
 		c = random.randrange(1,maxval)
-		d = a + b +c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+		d = a * b  # the result expected is a+b because i know that works (later will try again somethg more complicated)
 # le résultat attendu : d= a+b (d c'est le résultat)
 		X1 = [a, b, c]
 		if i == 0:
@@ -67,7 +65,7 @@ a.datas.split(random=False)
 a.nn.max_cpt=10000
 a.nn.min_J=0
 a.nn.min_J_cv=0.001
-a.init_syns([32,32,16])
+a.init_syns([32,16])
 a.nn.filename='nn.tmp'
 a.try_to_load()
 
