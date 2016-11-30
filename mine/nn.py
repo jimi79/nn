@@ -94,7 +94,6 @@ class Datas:
 		y_size = self.raw.y.shape[1]
 		c=np.c_[self.raw.X, self.raw.y]
 		if random:
-			print("randomizing dataset")
 			np.random.shuffle(c)
 		cpt=round(c.shape[0] / 3)
 		if train_part == None:
@@ -153,14 +152,15 @@ class Train:
 
 	def try_to_load(self):
 		if os.path.exists(self.nn.filename):
-			print("loading temp synapses values")
+			if self.nn.verbose:
+				print("loading temp synapses values")
 			self.nn.syns.load(self.nn.filename) 
 
 	def init_syns(self, size):
 		size.append(self.datas.trainset.y.shape[1]) 
 		self.nn.syns = Syns(size, self.datas.trainset.X.shape[1])
 
-	def FP(self, X):
+	def FPdl(self, X): # FP that return the whole datalayer
 		syns=self.nn.syns
 		countlayers = len(syns.vals)
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
@@ -172,8 +172,8 @@ class Train:
 		#return(datalayers[-1].a)
 		return(datalayers) # will be used for the BP
 
-	def FPSimple(self, X): # result is only the last layer, not the intermediate results
-		return self.FP(X)[-1].a
+	def FP(self, X): # result is only the last layer, not the intermediate results
+		return self.FPdl(X)[-1].a
 
 	def BP(self, y, datalayers):
 		m=y.shape[0]
@@ -208,19 +208,21 @@ class Train:
 		cpt = 0
 		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
 			cpt = cpt + 1
-			datalayers=self.FP(self.datas.trainset.X) # will update a 
+			datalayers=self.FPdl(self.datas.trainset.X) # will update a 
 			np.seterr(divide='ignore')
 			self.BP(y, datalayers)  # removed m, because that's dedudnant with a count of y or datalayers, remvoed l because in object self or params.
 			if self.nn.check_every_n_steps!=None: 
 				if (cpt % self.nn.check_every_n_steps == 0): 
 					J = self.cost_function(datalayers[-1].a, y)
-					np.seterr(divide='warn')
+					#np.seterr(divide='warn')
 					if J <= self.nn.min_J:
 						break 
 					J_cv = self.check(self.datas.cvset) 
-					print("Jtrain = %f, Jcv = %f" % (J, J_cv))
+					if self.nn.verbose:
+						print("Jtrain = %f, Jcv = %f" % (J, J_cv))
 			if (cpt % self.nn.save_every_n_steps == 0): 
-				print("saved")
+				if self.nn.verbose:
+					print("saved")
 				self.nn.syns.save(self.nn.filename) 
 		return self.nn.syns.vals
 
@@ -239,10 +241,10 @@ class Train:
 		syns=self.nn.syns
 		countlayers = len(syns.vals) 
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-		datalayers = self.FP(datas.X) # will update a 
+		yguess = self.FP(datas.X) # will update a 
 		y = datas.y
 		m = datas.X.shape[0]
-		J = self.cost_function(y, datalayers[-1].a)
+		J = self.cost_function(y, yguess)
 		return J
 
 
