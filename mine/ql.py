@@ -59,11 +59,15 @@ class Qlearning():
 # i need an object just for that. or maybe i could do with 3 lists, but that is the same.
 		max_points=0
 		res=[]
-		for i in range(list_actions):
-			if points[i] > max_points:
+
+		# here i need to random from time to time, in case i've got outcomes that are still at 0
+
+		for i in range(list_actions): 
+			if points[i] > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
+															# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
 				res=[]
 			res.append(i) # that action is amongst the best outcome possible 
-		i=res[random.randrange(len(res))]
+		i=res[random.randrange(len(res))] # i need to print that out with points so i can see what is the best outcome
 		if self.verbose:
 			print("I think outcome will be %d" % temp_format(outputs[i]))
 		return i

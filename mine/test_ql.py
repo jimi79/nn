@@ -73,15 +73,15 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 			a=np.zeros(10) 
 			a[action]=1
 			input_=np.concatenate([array_val, a]) # input should be a line
-			if X==None:
+			if type(X)==None:
 				X=np.array([input_])
 			else:
 				X=np.append(X, np.array([input_]), axis=0)
-			if y==None:
+			if type(y)==None:
 				y=np.array([array_val2])
 			else:
 				y=np.append(y, np.array([array_val2]), axis=0)
-			if winners==None:
+			if type(winners)==None:
 				winners=np.array([winner])
 			else:
 				winners=np.append(winners, np.array([winner]))
@@ -127,6 +127,7 @@ def get_nn():
 	nntmp.filename='nnqltmp.syn'
 	nntmp.check_every_n_steps=1
 	nntmp.save_every_n_steps=10
+	nntmp.lambda_=0 # maybe it will learn faster that way..
 	return nntmp
 
 def test(nn, val, action):
@@ -148,3 +149,15 @@ def test(nn, val, action):
 # idea : if that fucking thing can learn, eventually it will avoid loosing positions, and it will win.
 
 # maybe i need to do FP/BP till it learns at least why i'm trying to have it learning, only to do it once for each value. Which is the same than looping anyway
+
+# in short : i need the NN to learn faster, and then do the qlearning algo so that it will at least try to avoid situations during which it loses
+
+# ok, if that thing learn, then i'll create a unit in between, that will :
+# ask the thing to play
+# add the result to an array
+# BP the whole array
+# if the array is bigger than 10000, then remove the 100 first item.
+# because if i learn only the last one, then either alpha is high (1) and i will just make the NN dumber for all possibilities except the last one
+# either alpha is too low and that won't be any help to learn anythg.
+# i want the NN to be able to figure out a situation wihtout forgetting everythg else
+
