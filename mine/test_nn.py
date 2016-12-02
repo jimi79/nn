@@ -6,9 +6,9 @@ import os
 import pdb
 import random
 
-count=50000
-maxval=25
-binsize=16
+count=5000
+maxval=10
+binsize=8
 
 def convertXtoS(inp, ds_inp):
 	f = "{0:0" + str(ds_inp) + "b}"
@@ -62,12 +62,12 @@ if not os.path.exists('X.csv'):
 	build_csv(count, maxval, binsize)
 a.datas.raw.import_csv('./') 
 a.datas.split(random=False)
-a.nn.max_cpt=10000
+a.nn.max_cpt=100000
 a.nn.min_J=0
 a.nn.min_J_cv=0.001
-a.init_syns([32,16])
-a.nn.filename='nn.tmp'
-a.try_to_load()
+a.init_syns_for_trainset([8])
+a.nn.filename='nnmul.syn'
+#a.load_synapses()
 
 print("either do s = a.train()")
 print("or test(a, 1, 2, 3)")

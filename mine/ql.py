@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
+import importlib
 import nn
-
+import numpy as np
+import random
+import utils_ql
 
 class State:
 	def __init__(self, ident, points=None):
@@ -16,9 +19,10 @@ class Qlearning():
 		self.max_state=max_state
 		self.max_action=max_action 
 		self.nn=nn.Train()
-		self.nn.init_syns([self.max_state + self.max_action,self.max_state]) # one hidden layer
 		self.nn.display_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
 		self.nn.verbose=False
+		self.verbose=False
+		self.nn.nn.filename='nn09.tmp'
 
 		#self.last_res=None # last result i've got, so i can run BP without having to redo FP. But that is not very costy so it may not be necessary # wont store it for now
 
@@ -30,19 +34,25 @@ class Qlearning():
 # new state outputting of the NN is the same size of the in value, so in is 110, out is 100.
 
 
-	def pick_action(state, list_actions):
+
+# at some point i will need to define an array of states, because i can't use matrices as index. Or i could just convert that into a binary, because it's always 0 and 1 so far. But that might change..... That would be better if i start with indices, but that would make the thing slower maybe
+
+	def pick_action(self, state, list_actions):
 		# we try each actions against the NN, and then pick the one that lead to the status giving the more points
 
-		a=np.zeros(list_actions)
-
+		a=np.zeros(list_actions) 
 		outputs=[] # possible outputs for each action
 		points=[] # points available for a given action
 		for i in range(list_actions):
 			b=a
 			b[i]=1
-			input_=np.concat(state, b)
-			res=np.FPdl(input_)
-			outputs.append(res[-1].a) # it is a matrice here
+			input_=np.concatenate([state, b]) # input should be a line
+			input_=input_
+			res=self.nn.FP(input_)
+			res=res>=0.5
+			outputs.append(res) # it is a matrice here
+			if self.verbose:
+				print("FP with %d and action %d will be %d" % (temp_format(state), i, temp_format(res)))
 			points.append(0) # i don't know yet 
 		#so now i've got each output, and from there will be able to decide which is the best one. if max=0, then i pick at random. 
 # i should create a list sorted by that. How to do that ? Well, max=0. list=[]. if val >max: max=val, list=[]. else list.append(action[i])
@@ -53,10 +63,21 @@ class Qlearning():
 			if points[i] > max_points:
 				res=[]
 			res.append(i) # that action is amongst the best outcome possible 
-		a=random.range(len(res))
-		return a[i] # index of the action that has the best outcome
+		i=res[random.randrange(len(res))]
+		if self.verbose:
+			print("I think outcome will be %d" % temp_format(outputs[i]))
+		return i
 
-
-	def learn(oldstate, action, newstate): # will have to concatenate oldstate and action, that are an array of booleans. Not sure how to do that though. Plus the action list may change from time to time.
+	def learn(self, oldstate, list_actions, action, newstate): # will have to concatenate oldstate and action, that are an array of booleans. Not sure how to do that though. Plus the action list may change from time to time.
 # so action should be an integer, and i should adapt the size so it can handle the max action number
 # and action here is the max value
+		a=np.zeros(list_actions) 
+		a[action]=1
+		input_=np.concatenate([oldstate, a]) # input should be a line
+
+		if self.verbose:
+			print("BP with %s" % temp_format2(input_))
+		res=self.nn.FPdl(input_)
+		self.nn.BP(newstate) # nn object has still in memory the datalayer, so it remembered what the output was
+		
+

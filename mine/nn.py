@@ -46,7 +46,12 @@ def binary_to_int(y):
 	return [int(''.join([str(int(bool(b))) for b in a]),2) for a in y]
 
 def add_ones(X): 
-	return np.concatenate((np.array([1 for b in range(X.shape[0])])[None].T,X),1) 
+	if len(X.shape)==1:
+		return np.column_stack([1,[X]])
+	else:
+		size=X.shape[0]
+		return np.column_stack([np.ones([size,1]),X])
+
 	
 def sigmoidGradient(X):
 	g=expit(X) 
@@ -150,15 +155,22 @@ class Train:
 		self.nn = NN()
 		self.datas = Datas() 
 
-	def try_to_load(self):
+	def load_synapses(self):
 		if os.path.exists(self.nn.filename):
 			if self.nn.verbose:
 				print("loading temp synapses values")
 			self.nn.syns.load(self.nn.filename) 
+			self.nn.load_synapses=True
 
-	def init_syns(self, size):
-		size.append(self.datas.trainset.y.shape[1]) 
-		self.nn.syns = Syns(size, self.datas.trainset.X.shape[1])
+	def init_syns(self, sizes, size_first_layer, size_last_layer): 
+		sizes.append(size_last_layer)
+		self.nn.syns = Syns(sizes, size_first_layer)
+		self.nn.load_synapses=False
+
+	def init_syns_for_trainset(self, sizes):
+		size_first_layer=self.datas.trainset.X.shape[1]
+		size_last_layer=self.datas.trainset.y.shape[1]
+		self.init_syns(sizes, size_first_layer, size_last_layer) 
 
 	def FPdl(self, X): # FP that return the whole datalayer
 		syns=self.nn.syns
@@ -170,12 +182,18 @@ class Train:
 			datalayers[i+1].z = np.dot(datalayers[i].a, syns.vals[i])
 			datalayers[i+1].a = expit(datalayers[i+1].z) 
 		#return(datalayers[-1].a)
+		self.datalayers=datalayers # to remember for the next BP
 		return(datalayers) # will be used for the BP
 
 	def FP(self, X): # result is only the last layer, not the intermediate results
-		return self.FPdl(X)[-1].a
+		res=self.FPdl(X)[-1].a
+		if len(X.shape)==1:
+			return res[0]
+		else:
+			return res
 
-	def BP(self, y, datalayers):
+	def BP(self, y):
+		datalayers=self.datalayers
 		m=y.shape[0]
 		datalayers[-1].s = datalayers[-1].a - y
 		syns=self.nn.syns
@@ -201,16 +219,27 @@ class Train:
 		J = np.sum((yexpected - yguess)**2) / m # i've got divided by 0 here in log 
 		return J
 
+	def save(self):
+		if self.nn.filename != "":
+			self.nn.syns.save(self.nn.filename) 
+			if self.nn.verbose:
+				print("saved")
+
+
 	def train(self): # desc is only for the hidden layers 
-		self.try_to_load()
+		if self.nn.synapses_empty:
+			self.load_synapses()
 		y = self.datas.trainset.y
 		error=999999
 		cpt = 0
+		if self.nn.verbose:
+			print("training")
 		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
+			self.nn.synapses_empty=False
 			cpt = cpt + 1
 			datalayers=self.FPdl(self.datas.trainset.X) # will update a 
 			np.seterr(divide='ignore')
-			self.BP(y, datalayers)  # removed m, because that's dedudnant with a count of y or datalayers, remvoed l because in object self or params.
+			self.BP(y)
 			if self.nn.check_every_n_steps!=None: 
 				if (cpt % self.nn.check_every_n_steps == 0): 
 					J = self.cost_function(datalayers[-1].a, y)
@@ -219,11 +248,10 @@ class Train:
 						break 
 					J_cv = self.check(self.datas.cvset) 
 					if self.nn.verbose:
-						print("Jtrain = %f, Jcv = %f" % (J, J_cv))
+						print("Jtrain = %f, Jcv = %f" % (J, J_cv)) 
 			if (cpt % self.nn.save_every_n_steps == 0): 
-				if self.nn.verbose:
-					print("saved")
-				self.nn.syns.save(self.nn.filename) 
+				self.save() 
+		self.save() 
 		return self.nn.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example
