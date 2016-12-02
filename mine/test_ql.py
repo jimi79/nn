@@ -20,7 +20,7 @@ def play(val):
 		act=act-1
 	return act-val 
 
-def play_with_comp(verbose, withAI, withCSV, X, y):
+def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 # bob is the perfect player
 # alice is the Ql thingy
 
@@ -37,6 +37,7 @@ def play_with_comp(verbose, withAI, withCSV, X, y):
 	array_val=np.zeros(101)
 	alicewin=False
 	bobwin=False
+	winner=""
 	while val < 100:
 		array_val=np.zeros(101)
 		array_val[val]=1  
@@ -65,6 +66,10 @@ def play_with_comp(verbose, withAI, withCSV, X, y):
 			myql.learn(array_val, 10, action, array_val2)
 
 		if withCSV:
+			if alicewin:
+				winner="alice"
+			if bobwin:
+				winner="bob"
 			a=np.zeros(10) 
 			a[action]=1
 			input_=np.concatenate([array_val, a]) # input should be a line
@@ -76,6 +81,10 @@ def play_with_comp(verbose, withAI, withCSV, X, y):
 				y=np.array([array_val2])
 			else:
 				y=np.append(y, np.array([array_val2]), axis=0)
+			if winners==None:
+				winners=np.array([winner])
+			else:
+				winners=np.append(winners, np.array([winner]))
 
 	if verbose:
 		if alicewin:
@@ -83,11 +92,12 @@ def play_with_comp(verbose, withAI, withCSV, X, y):
 		if bobwin:
 			print("bob win")
 
-	return X,y
+	return X,y,winners
 
 def loop_with_comp(count, withAI=True, withCSV=False):
 	X=None
 	y=None
+	winners=None
 	if count==1:
 		verbose=True
 		myql.verbose=True
@@ -95,13 +105,13 @@ def loop_with_comp(count, withAI=True, withCSV=False):
 		verbose=False
 		myql.verbose=False
 	for i in range(count):
-		X,y=play_with_comp(verbose, withAI, withCSV, X, y) 
+		X,y,winners=play_with_comp(verbose, withAI, withCSV, X, y, winners) 
 
 	if withCSV: 
 		np.savetxt('X.csv', X, fmt='%.0f', delimiter=',') 
 		np.savetxt('y.csv', y, fmt='%.0f', delimiter=',') 
 
-		text=["%d,%d,%d" % (utils_ql.temp_format(X[i,0:101]), utils_ql.temp_format(X[i,101:])+1, utils_ql.temp_format(y[i])) for i in range(y.shape[0])]
+		text=["%d,%d,%d,%s" % (utils_ql.temp_format(X[i,0:101]), utils_ql.temp_format(X[i,101:])+1, utils_ql.temp_format(y[i]), winners[i]) for i in range(y.shape[0])]
 		np.savetxt('text', text, fmt='%s') 
 
 def get_nn():
@@ -133,3 +143,8 @@ def test(nn, val, action):
 #test(nn,1,2)
 #test(nn,13,4)
 #test(nn,85,2)
+
+
+# idea : if that fucking thing can learn, eventually it will avoid loosing positions, and it will win.
+
+# maybe i need to do FP/BP till it learns at least why i'm trying to have it learning, only to do it once for each value. Which is the same than looping anyway
