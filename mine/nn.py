@@ -161,7 +161,7 @@ class Train:
 	def load_synapses(self):
 		if os.path.exists(self.nn.filename):
 			if self.nn.verbose:
-				print("loading temp synapses values")
+				print("loading temp synapses values, file %s" % self.nn.filename)
 			self.nn.syns.load(self.nn.filename) 
 			self.nn.synapses_empty=False
 

@@ -73,15 +73,15 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 			a=np.zeros(10) 
 			a[action]=1
 			input_=np.concatenate([array_val, a]) # input should be a line
-			if type(X)==None:
+			if X is None:
 				X=np.array([input_])
 			else:
 				X=np.append(X, np.array([input_]), axis=0)
-			if type(y)==None:
+			if y is None:
 				y=np.array([array_val2])
 			else:
 				y=np.append(y, np.array([array_val2]), axis=0)
-			if type(winners)==None:
+			if winners is None:
 				winners=np.array([winner])
 			else:
 				winners=np.append(winners, np.array([winner]))
@@ -119,16 +119,16 @@ def get_nn():
 	print("loading datas")
 	nntmp.datas.raw.import_csv('./') 
 	nntmp.datas.split(random=True,train_part=int(0.8*nntmp.datas.raw.X.shape[0]))
-	nntmp.nn.max_cpt=100
+	nntmp.nn.max_cpt=10000
 	nntmp.nn.min_J=0.001
 	nntmp.nn.min_J_cv=0.001
 	nntmp.nn.verbose=True
 	nntmp.init_syns_for_trainset([101])
-	nntmp.filename='nnqltmp.syn'
-	nntmp.check_every_n_steps=1
+	nntmp.nn.filename='nnqltmp.syn'
+	nntmp.nn.check_every_n_steps=10
 	nntmp.nn.lambda_=1
-	nntmp.save_every_n_steps=10
-	nntmp.lambda_=0 # maybe it will learn faster that way..
+	nntmp.nn.save_every_n_steps=100
+	nntmp.nn.lambda_=0 # maybe it will learn faster that way..
 	return nntmp
 
 def test(nn, val, action):
@@ -138,7 +138,7 @@ def test(nn, val, action):
 	b[action]=1
 	input_=np.concatenate([a, b])
 	r=nn.FP(input_)
-	print(utils_ql.temp_format(r))
+	return r, utils_ql.temp_format(r>=0.5)
 
 #nn=get_nn()
 #nn.load_synapses()
