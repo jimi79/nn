@@ -107,6 +107,9 @@ class Datas:
 			cv_part = cpt
 		test_part = c.shape[0] - train_part - cv_part 
 
+		train_part=int(train_part)
+		cv_part=int(cv_part)
+		test_part=int(test_part)
 		self.trainset = Set(c[0:train_part,0:-y_size], c[0:train_part,-y_size:]) 
 		self.cvset = Set(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
 		self.testset = Set(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
@@ -160,12 +163,12 @@ class Train:
 			if self.nn.verbose:
 				print("loading temp synapses values")
 			self.nn.syns.load(self.nn.filename) 
-			self.nn.load_synapses=True
+			self.nn.synapses_empty=False
 
 	def init_syns(self, sizes, size_first_layer, size_last_layer): 
 		sizes.append(size_last_layer)
 		self.nn.syns = Syns(sizes, size_first_layer)
-		self.nn.load_synapses=False
+		self.nn.synapses_empty=True
 
 	def init_syns_for_trainset(self, sizes):
 		size_first_layer=self.datas.trainset.X.shape[1]

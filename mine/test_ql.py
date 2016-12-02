@@ -118,7 +118,7 @@ def get_nn():
 	nntmp=nn.Train()
 	print("loading datas")
 	nntmp.datas.raw.import_csv('./') 
-	nntmp.datas.split(random=True,train_part=0.8)
+	nntmp.datas.split(random=True,train_part=int(0.8*nntmp.datas.raw.X.shape[0]))
 	nntmp.nn.max_cpt=100
 	nntmp.nn.min_J=0.001
 	nntmp.nn.min_J_cv=0.001
@@ -126,6 +126,7 @@ def get_nn():
 	nntmp.init_syns_for_trainset([101])
 	nntmp.filename='nnqltmp.syn'
 	nntmp.check_every_n_steps=1
+	nntmp.nn.lambda_=1
 	nntmp.save_every_n_steps=10
 	nntmp.lambda_=0 # maybe it will learn faster that way..
 	return nntmp
