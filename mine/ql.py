@@ -82,6 +82,45 @@ class Qlearning():
 		if self.verbose:
 			print("BP with %s" % temp_format2(input_))
 		res=self.nn.FPdl(input_)
+
+
+		self.datasets.raw
+
 		self.nn.BP(newstate) # nn object has still in memory the datalayer, so it remembered what the output was
 		
+# ok, so now, is the FP/BP method any good, or do i need to build a package ?
+
+# it seems i need to build a big package of restuls though.
+# meaning that, i will do that, have a max size (taht can be -1), and learn each time that package reach a min value.
+
+# thinking ktning
+# variables
+
+# number of min lines in a dataset before learning
+# should i learn each time that big dataset ?
+# should i learn a big dataset, then make adjustments ?
+# should i just remove doublons from the dataset (how ?) and learn over and over that one ?
+# should i do a BP till Jcv drops, from time to time, to correctly assimilate the new value ?
+# and then i will maybe someday implement the actual QL
+
+
+# use the loop, over 1000 exemples. check the nn that is trained on the way, and compare perf with the nn that is trained on the whole dataset.
+# that is not fair, the nn trained over the whole dataset is trained n times over that 1000 examples dataset.
+# compare a loop over 10000 with an AI that updates each time
+# with an AI that has a 1000 example dataset, and train 10 times max
+# why doing that : well, check that an AI trained nnnn times for each value is at least as good as an AI trained on the whole dataset. Because my question is : is an AI that does BP for only one value can destroy all the rest ? (i think it can)
+
+# answer, or at least one of them : https://www.researchgate.net/post/Which_one_is_better_between_online_and_offline_trained_neural_network -> yes, batch is better. meaning that i should play 1000 times, then study the batch.
+# so the learn function here should be able to put aside stuff every n times, and then use the actual train function
+
+
+
+# modify Learn function to actually feed the dataset, and if its size > 1000, then remove stuff in double (X and y should match though, no idea how i will do that), or i remove only X that are in double, taking the most recent (highest index), on the basis that rtahrqwkejrhkjqlwherkjqwehlrj
+# ok that is wrong. having multiples values can help under some circumstances
+# otherwise i don't need a NN, because i'm assuming the outcome is definitive
+
+# SO : we wait till we have n datas when asked to 'learn'. when we got them, we learn (train) till Jcv or Jtrain drops under a given value (Jcv is better). split will left 0 for test. when we got over m datas, we remove n of them.
+# and in learn, we try to do qlearning too. value of status is max of leading status. For that i think i need an array, that will use the integer version of the bool of status. Or i use the AI to find out what status is the next to the current status i'm evaluating. I think using AI is good because that is what i know how to reach.
+
+# + test alpha with the classic nn test to see if it learns faster or not
 
