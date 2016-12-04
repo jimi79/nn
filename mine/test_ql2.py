@@ -21,7 +21,7 @@ def init_ai(name):
 	ai.nn.nn.verbose=False
 	ai.nn.nn.filename="%s.tmp" % name
 	ai.nn.load_synapses() 
-	ai.nn.nn.max_cpt=1000
+	ai.nn.nn.max_cpt=100
 	ai.name=name
 	return ai
 
@@ -63,8 +63,7 @@ def play_AI(AI, AI2, actions, vals, verbose=True):
 		points=None
 		if newval==100:
 			points=-100
-		AI2.learn(oldval, 10, oldaction, oldvalb, points)
-
+		AI2.learn(oldval, 10, oldaction, oldvalb, points) 
 
 	# exception : if AI wins, then i should notify it too, because nobody will otherwise
 	if newval==100:
@@ -75,8 +74,7 @@ def play_AI(AI, AI2, actions, vals, verbose=True):
 		oldaction=actions[-1]
 		if verbose:
 			print("I tell %s what happened. val was %d before they played %d, and now it's %d" % (AI.name, utils_ql.temp_format(oldval), oldaction, utils_ql.temp_format(oldvalb)))
-		AI.learn(oldval, 10, oldaction, oldvalb, 100)
-
+		AI.learn(oldval, 10, oldaction, oldvalb, 100) 
 
 	return actions,vals
 
@@ -106,9 +104,10 @@ def play(verbose):
 			actions,vals=play_AI(alice, bob, actions, vals, verbose=verbose) 
 		if vals[-1]==100:
 			winner="alice" 
-		actions,vals=play_AI(bob, alice, actions, vals, verbose=verbose)
-		if vals[-1]==100:
-			winner="bob" 
+		if winner=="":
+			actions,vals=play_AI(bob, alice, actions, vals, verbose=verbose)
+			if vals[-1]==100:
+				winner="bob" 
 		alicestart=True # next turn we play normally 
 	if verbose:
 		print ("%s win" % winner)
