@@ -120,7 +120,6 @@ def get_nn():
 	nntmp.datas.raw.import_csv('./') 
 	nntmp.datas.split(random=True,train_part=int(0.8*nntmp.datas.raw.X.shape[0]))
 	nntmp.nn.max_cpt=10000
-	nntmp.nn.min_J=0.001
 	nntmp.nn.min_J_cv=0.001
 	nntmp.nn.verbose=True
 	nntmp.init_syns_for_trainset([101])

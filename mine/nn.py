@@ -20,7 +20,7 @@ import sys
 
 
 # we'll have an object, that will be called nn_params
-# inside, we got raw, train, cv, shift, lambda, min_J, max_cpt, synapses. But we don't send that object directly to the train function
+# inside, we got raw, train, cv, shift, lambda, max_cpt, synapses. But we don't send that object directly to the train function
 # raw is a datas class 
 # train function return synapses
 
@@ -144,7 +144,6 @@ class NN:
 		self.check_every_n_steps = 100
 		self.save_every_n_steps = 1000
 		self.dataset = None 
-		self.min_J = 0.001
 		self.min_J_cv = 0.01 
 		self.max_cpt = -1 # handle that case stupid
 		self.lambda_=3 # lambda default value
@@ -228,6 +227,15 @@ class Train:
 			if self.nn.verbose:
 				print("saved")
 
+	def test_cost_function(self):
+		res=False
+		J = self.check(self.datas.trainset) 
+		J_cv = self.check(self.datas.cvset) 
+		if J_cv <= self.nn.min_J_cv:
+			res=True
+		if self.nn.verbose:
+			print("Jtrain = %f, Jcv = %f" % (J, J_cv)) 
+		return res 
 
 	def train(self): # desc is only for the hidden layers 
 		if self.nn.synapses_empty:
@@ -235,26 +243,27 @@ class Train:
 		y = self.datas.trainset.y
 		error=999999
 		cpt = 0
-		if self.nn.verbose:
-			print("training")
-		while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
-			self.nn.synapses_empty=False
-			cpt = cpt + 1
-			datalayers=self.FPdl(self.datas.trainset.X) # will update a 
-			np.seterr(divide='ignore')
-			self.BP(y)
-			if self.nn.check_every_n_steps!=None: 
-				if (cpt % self.nn.check_every_n_steps == 0): 
-					J = self.cost_function(datalayers[-1].a, y)
-					#np.seterr(divide='warn')
-					if J <= self.nn.min_J:
-						break 
-					J_cv = self.check(self.datas.cvset) 
-					if self.nn.verbose:
-						print("Jtrain = %f, Jcv = %f" % (J, J_cv)) 
-			if (cpt % self.nn.save_every_n_steps == 0): 
-				self.save() 
-		self.save() 
+
+		if self.test_cost_function():
+			print("network already ok")
+		else: 
+			if self.nn.verbose:
+				print("training") 
+			while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
+				self.nn.synapses_empty=False
+				cpt = cpt + 1
+				datalayers=self.FPdl(self.datas.trainset.X) # will update a 
+				np.seterr(divide='ignore')
+				self.BP(y)
+				if self.nn.check_every_n_steps!=None: 
+					if (cpt % self.nn.check_every_n_steps == 0): 
+						if self.test_cost_function():
+							break
+				if (cpt % self.nn.save_every_n_steps == 0): 
+					self.save() 
+			self.save() 
+			if self.nn.verbose:
+				print("ended up after %d loops" % cpt)
 		return self.nn.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example

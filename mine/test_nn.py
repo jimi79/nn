@@ -63,10 +63,12 @@ if not os.path.exists('X.csv'):
 a.datas.raw.import_csv('./') 
 a.datas.split(random=False)
 a.nn.max_cpt=100000
-a.nn.min_J=0
-a.nn.min_J_cv=0.001
-a.init_syns_for_trainset([8])
+a.nn.min_J_cv=0.01
+a.init_syns_for_trainset([32,16])
 a.nn.filename='nnmul.syn'
+a.nn.verbose=True
+a.nn.check_every_n_steps=100
+a.nn.alpha=1
 #a.load_synapses()
 
 print("either do s = a.train()")

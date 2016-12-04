@@ -83,8 +83,13 @@ class Qlearning():
 			print("BP with %s" % temp_format2(input_))
 		res=self.nn.FPdl(input_)
 
+		if self.datasets.raw.X is None:
+			self.datasets.raw.X=[input_]
+		else: 
+			self.datasets.raw.X.append([input_])
 
-		self.datasets.raw
+
+
 
 		self.nn.BP(newstate) # nn object has still in memory the datalayer, so it remembered what the output was
 		
@@ -123,4 +128,4 @@ class Qlearning():
 # and in learn, we try to do qlearning too. value of status is max of leading status. For that i think i need an array, that will use the integer version of the bool of status. Or i use the AI to find out what status is the next to the current status i'm evaluating. I think using AI is good because that is what i know how to reach.
 
 # + test alpha with the classic nn test to see if it learns faster or not
-
+# test cost function on cv and train before training, in case the network is already ok
