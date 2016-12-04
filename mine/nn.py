@@ -97,7 +97,8 @@ class Datas:
 
 	def split(self, train_part=None, cv_part=None, random=True):
 		y_size = self.raw.y.shape[1]
-		c=np.c_[self.raw.X, self.raw.y]
+		if random or (train_part is None) or (cv_part is None): # otherwise we don't need to concatenate
+			c=np.c_[self.raw.X, self.raw.y]
 		if random:
 			np.random.shuffle(c)
 		cpt=round(c.shape[0] / 3)
@@ -106,13 +107,17 @@ class Datas:
 		if cv_part == None:
 			cv_part = cpt
 		test_part = c.shape[0] - train_part - cv_part 
-
 		train_part=int(train_part)
 		cv_part=int(cv_part)
 		test_part=int(test_part)
 		self.trainset = Set(c[0:train_part,0:-y_size], c[0:train_part,-y_size:]) 
 		self.cvset = Set(c[train_part:train_part + cv_part,0:-y_size], c[train_part:train_part + cv_part,-y_size:])
 		self.testset = Set(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
+
+	def split_half(self):
+		half=round(self.raw.X/2)
+		self.split(half, half)
+
 
 class Syns: 
 
@@ -143,7 +148,6 @@ class NN:
 	def __init__(self):
 		self.check_every_n_steps = 100
 		self.save_every_n_steps = 1000
-		self.dataset = None 
 		self.min_J_cv = 0.01 
 		self.max_cpt = -1 # handle that case stupid
 		self.lambda_=3 # lambda default value
@@ -245,7 +249,8 @@ class Train:
 		cpt = 0
 
 		if self.test_cost_function():
-			print("network already ok")
+			if self.verbose:
+				print("network already ok")
 		else: 
 			if self.nn.verbose:
 				print("training") 

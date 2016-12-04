@@ -6,23 +6,41 @@ import numpy as np
 import random
 import utils_ql
 
-class State:
-	def __init__(self, ident, points=None):
-		self.ident=ident
-		if points==None:
-			points=0 #not good, not bad
-		self.points=points
+
+
+
+
+
+
+
+def array_to_string(array):
+# turn an array of binary into an integer. will make it easier to find an item with an index. that means too that i can't handle values outside 0 and 1 though. 
+	#return ''.join(str(array))
+	return utils_ql.temp_format(array)
 
 class Qlearning():
 	def __init__(self, max_state, max_action):
 # max_action is all state included. it's just to prepare a input for the NN large enough
 		self.max_state=max_state
 		self.max_action=max_action 
+		self.min_data_to_train=1000 # default value
+		self.max_data_to_train=5000 # default value
+		self.min_cpt_since_last_train=100 # don't train every time
+		self.cpt_since_last_train=0 
+		self.array_points={}
+		self.alpha=0.8 # factor with which i should use the max
+
+# nn setup
 		self.nn=nn.Train()
 		self.nn.display_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
 		self.nn.verbose=False
+		self.nn.min_J_cv=0.01
+		self.nn.max_cpt=10000 
+		self.nn.nn.filename='nn09.tmp' 
 		self.verbose=False
-		self.nn.nn.filename='nn09.tmp'
+		self.X=[]
+		self.y=[]
+
 
 		#self.last_res=None # last result i've got, so i can run BP without having to redo FP. But that is not very costy so it may not be necessary # wont store it for now
 
@@ -40,59 +58,114 @@ class Qlearning():
 	def pick_action(self, state, list_actions):
 		# we try each actions against the NN, and then pick the one that lead to the status giving the more points
 
-		a=np.zeros(list_actions) 
 		outputs=[] # possible outputs for each action
 		points=[] # points available for a given action
+
+		state_str=array_to_string(state)
+
 		for i in range(list_actions):
-			b=a
+			b=np.zeros(list_actions) 
 			b[i]=1
 			input_=np.concatenate([state, b]) # input should be a line
-			input_=input_
 			res=self.nn.FP(input_)
-			res=res>=0.5
-			outputs.append(res) # it is a matrice here
+			output=res>=0.5
+			outputs.append(output) # it is a matrice here 
+			new_state_str=array_to_string(output) 
+			b=self.array_points.get(new_state_str)
+			points.append(b)
 			if self.verbose:
-				print("FP with %d and action %d will be %d" % (temp_format(state), i, temp_format(res)))
-			points.append(0) # i don't know yet 
-		#so now i've got each output, and from there will be able to decide which is the best one. if max=0, then i pick at random. 
-# i should create a list sorted by that. How to do that ? Well, max=0. list=[]. if val >max: max=val, list=[]. else list.append(action[i])
-# i need an object just for that. or maybe i could do with 3 lists, but that is the same.
-		max_points=0
-		res=[]
+				if b is None:
+					b="?"
+				else:
+					b=str(b)
+				print("%d+%d=%d(%s points)," % (utils_ql.temp_format(state),i+1,utils_ql.temp_format(output),b),end="") 
 
-		# here i need to random from time to time, in case i've got outcomes that are still at 0
-
-		for i in range(list_actions): 
-			if points[i] > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
-															# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
-				res=[]
-			res.append(i) # that action is amongst the best outcome possible 
-		i=res[random.randrange(len(res))] # i need to print that out with points so i can see what is the best outcome
 		if self.verbose:
-			print("I think outcome will be %d" % temp_format(outputs[i]))
-		return i
+			print("")
+		max_points=None
+		best_actions=[] 
+		unknown_actions=[]
+		avg=0 # average outcome of the status to come
+		sum_=0
+		cpt=0 
+		for i in range(list_actions): 
+			p=points[i]
+			if not(p is None):
+				sum_+=p
+				cpt+=1 
+			if not(p is None):
+				if max_points is None:
+					max_points=p
+				if p > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
+																# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
+					best_actions=[]
+				best_actions.append(i) # that action is amongst the best outcome possible 
+			else:
+				unknown_actions.append(i)
 
-	def learn(self, oldstate, list_actions, action, newstate): # will have to concatenate oldstate and action, that are an array of booleans. Not sure how to do that though. Plus the action list may change from time to time.
+		if cpt>0:
+			avg=sum_/cpt
+			self.array_points[array_to_string(state)]=self.alpha*avg
+
+		if len(best_actions)==0:
+			best_action=random.randrange(list_actions)
+			if self.verbose:
+				print("I picked an action at random, i have no idea")
+		else:
+			if max_points>0: 
+				best_action=random.choice(best_actions)
+				if self.verbose:
+					print("I picked action %d because it is worth %d points" % (best_action, max_points))
+			else:
+				if len(unknown_actions)==0:
+					best_action=random.randrange(list_actions)
+					if self.verbose:
+						print("I picked an action that will make me loose, because i have no choice")
+				else:
+					best_action=random.choice(unknown_actions)
+					if self.verbose:
+						print("I picked action %d because that is one amongst which i won't loose" % (best_action))
+
+		return best_action
+
+
+
+	def learn(self, oldstate, list_actions, action, newstate, points=None): # will have to concatenate oldstate and action, that are an array of booleans. Not sure how to do that though. Plus the action list may change from time to time.
 # so action should be an integer, and i should adapt the size so it can handle the max action number
 # and action here is the max value
 		a=np.zeros(list_actions) 
 		a[action]=1
 		input_=np.concatenate([oldstate, a]) # input should be a line
+		output=newstate
 
-		if self.verbose:
-			print("BP with %s" % temp_format2(input_))
-		res=self.nn.FPdl(input_)
+		#if self.verbose:
+		#	print("FP after %s" % utils_ql.temp_format(output))
+		#res=self.nn.FPdl(input_)
 
-		if self.datasets.raw.X is None:
-			self.datasets.raw.X=[input_]
-		else: 
-			self.datasets.raw.X.append([input_])
+		self.X.append(input_)
+		self.y.append(output)
 
+		while len(self.X) > self.max_data_to_train:
+			self.X.pop(0)
+			self.y.pop(0) # X and y have to be synchronized, no matter what
 
-
-
-		self.nn.BP(newstate) # nn object has still in memory the datalayer, so it remembered what the output was
+		self.cpt_since_last_train+=1
+		if len(self.X) >= self.min_data_to_train:
+			if self.cpt_since_last_train >= self.min_cpt_since_last_train:
+				self.nn.datas.raw.X=np.array(self.X)
+				self.nn.datas.raw.y=np.array(self.y)
+				self.nn.datas.split() # split half
+				self.nn.train()
+				self.cpt_since_last_train=0
 		
+		# got to handle points here.
+		if points!=None:
+			state=array_to_string(newstate)
+			if self.verbose:
+				print("I've got to remember that the state %d is worth %d" % (utils_ql.temp_format(newstate), points))
+			self.array_points[state]=points 
+
+
 # ok, so now, is the FP/BP method any good, or do i need to build a package ?
 
 # it seems i need to build a big package of restuls though.

@@ -10,6 +10,14 @@ import utils_ql
 # the ql that is used. i make it global so i can study it easily
 myql=ql.Qlearning(101,10)
 myql.nn.init_syns([111,111],111,101) # 2 hidden layers 
+myql.min_data_to_train=1000 # default value
+myql.max_data_to_train=10000 # default value
+myql.min_cpt_since_last_train=100 # don't train every time
+myql.cpt_since_last_train=0
+myql.nn.min_J_cv=0.05
+myql.verbose=False
+myql.nn.nn.verbose=False
+myql.nn.load_synapses() 
 
 
 def play(val):
@@ -24,8 +32,8 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 # bob is the perfect player
 # alice is the Ql thingy
 
-	if random.random() >= 0.5:
-		val=9 # bob starts
+	if random.random() >= 0.9: # bob starts less often, giving more chances for alice to win
+		val=1 # bob starts. To win, u have to start with 1
 		if verbose:
 			print("bob starts with %d" % val)
 	else:
@@ -62,14 +70,20 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 
 		array_val2=np.zeros(101)
 		array_val2[val]=1 
-		if withAI:
-			myql.learn(array_val, 10, action, array_val2)
 
+		points=None
+		if alicewin:
+			points=100
+		if bobwin:
+			points=-100 
+		if withAI:
+			myql.learn(array_val, 10, action, array_val2, points)
+
+		if alicewin:
+			winner="alice"
+		if bobwin:
+			winner="bob"
 		if withCSV:
-			if alicewin:
-				winner="alice"
-			if bobwin:
-				winner="bob"
 			a=np.zeros(10) 
 			a[action]=1
 			input_=np.concatenate([array_val, a]) # input should be a line
@@ -81,10 +95,6 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 				y=np.array([array_val2])
 			else:
 				y=np.append(y, np.array([array_val2]), axis=0)
-			if winners is None:
-				winners=np.array([winner])
-			else:
-				winners=np.append(winners, np.array([winner]))
 
 	if verbose:
 		if alicewin:
@@ -92,12 +102,12 @@ def play_with_comp(verbose, withAI, withCSV, X, y, winners):
 		if bobwin:
 			print("bob win")
 
-	return X,y,winners
+	return X,y,winner
 
 def loop_with_comp(count, withAI=True, withCSV=False):
 	X=None
 	y=None
-	winners=None
+	winners=[]
 	if count==1:
 		verbose=True
 		myql.verbose=True
@@ -105,7 +115,10 @@ def loop_with_comp(count, withAI=True, withCSV=False):
 		verbose=False
 		myql.verbose=False
 	for i in range(count):
-		X,y,winners=play_with_comp(verbose, withAI, withCSV, X, y, winners) 
+		X,y,winner=play_with_comp(verbose, withAI, withCSV, X, y, winners) 
+		if winner!="bob":
+			print(winner)
+		winners.append(winner)
 
 	if withCSV: 
 		np.savetxt('X.csv', X, fmt='%.0f', delimiter=',') 
@@ -137,7 +150,7 @@ def test(nn, val, action):
 	b[action]=1
 	input_=np.concatenate([a, b])
 	r=nn.FP(input_)
-	return r, utils_ql.temp_format(r>=0.5)
+	return utils_ql.temp_format(r>=0.5)
 
 #nn=get_nn()
 #nn.load_synapses()
