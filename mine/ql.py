@@ -7,15 +7,7 @@ import random
 import utils_ql
 
 
-
-
-
-
-
-
 def array_to_string(array):
-# turn an array of binary into an integer. will make it easier to find an item with an index. that means too that i can't handle values outside 0 and 1 though. 
-	#return ''.join(str(array))
 	return utils_ql.temp_format(array)
 
 class Qlearning():
@@ -32,8 +24,9 @@ class Qlearning():
 
 # nn setup
 		self.nn=nn.Train()
-		self.nn.display_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
-		self.nn.verbose=False
+		self.nn.check_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
+		self.nn.save_every_n_steps=-1
+		self.nn.nn.verbose=False
 		self.nn.min_J_cv=0.01
 		self.nn.max_cpt=10000 
 		self.nn.nn.filename='nn09.tmp' 
@@ -63,10 +56,10 @@ class Qlearning():
 
 		state_str=array_to_string(state)
 
-		for i in range(list_actions):
-			b=np.zeros(list_actions) 
-			b[i]=1
-			input_=np.concatenate([state, b]) # input should be a line
+		for i in list_actions: 
+			a=np.zeros(10)
+			a[i]=1 
+			input_=np.concatenate([state, a]) # input should be a line
 			res=self.nn.FP(input_)
 			output=res>=0.5
 			outputs.append(output) # it is a matrice here 
@@ -88,7 +81,7 @@ class Qlearning():
 		avg=0 # average outcome of the status to come
 		sum_=0
 		cpt=0 
-		for i in range(list_actions): 
+		for i in list_actions: 
 			p=points[i]
 			if not(p is None):
 				sum_+=p
@@ -108,7 +101,7 @@ class Qlearning():
 			self.array_points[array_to_string(state)]=self.alpha*avg
 
 		if len(best_actions)==0:
-			best_action=random.randrange(list_actions)
+			best_action=random.choice(list_actions)
 			if self.verbose:
 				print("I picked an action at random, i have no idea")
 		else:
@@ -118,7 +111,7 @@ class Qlearning():
 					print("I picked action %d because it is worth %d points" % (best_action, max_points))
 			else:
 				if len(unknown_actions)==0:
-					best_action=random.randrange(list_actions)
+					best_action=random.choice(list_actions)
 					if self.verbose:
 						print("I picked an action that will make me loose, because i have no choice")
 				else:
@@ -157,6 +150,7 @@ class Qlearning():
 				self.nn.datas.split() # split half
 				self.nn.train()
 				self.cpt_since_last_train=0
+				self.nn.save()
 		
 		# got to handle points here.
 		if points!=None:

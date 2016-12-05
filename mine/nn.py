@@ -264,8 +264,9 @@ class Train:
 					if (cpt % self.nn.check_every_n_steps == 0): 
 						if self.test_cost_function():
 							break
-				if (cpt % self.nn.save_every_n_steps == 0): 
-					self.save() 
+				if self.nn.save_every_n_steps!=-1:
+					if (cpt % self.nn.save_every_n_steps == 0): 
+						self.save() 
 			self.save() 
 			if self.nn.verbose:
 				print("ended up after %d loops" % cpt)
