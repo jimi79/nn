@@ -142,8 +142,8 @@ def play(verbose):
 			if verbose:
 				print_game(board_alice, board_bob) 
 
-		h=[a+b*2 for a,b in zip(board_alice, board_bob)]
-		history.append(h)
+			h=[a+b*2 for a,b in zip(board_alice, board_bob)]
+			history.append(h)
 		if tie:
 			winner="tie"
 
@@ -155,6 +155,7 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
 	alice=0
 	tie=0
 	stats=0
+	duration=0
 	if verbose_stats==True:
 		verbose_stats=100 # default value
 
@@ -169,6 +170,7 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
 	for i in range(count):
 		stats+=1
 		winner,history=play(verbose_detail)
+		duration+=len(history)
 		if winner=="tie":
 			tie+=1
 		if winner=="alice":
@@ -180,9 +182,14 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
 			print_history(history,winner)
 
 		if stats==verbose_stats:
-			stats=0
 			if verbose_stats:
-				print("Alice %.0f, Bob %.0f, Tie %.0f, count %d" % (alice/i*100, bob/i*100, tie/i*100, i+1))
+				print("For the last %d games : alice %.0f, Bob %.0f, Tie %.0f, duration game %.2f, count %d" % (verbose_stats, alice/stats*100, bob/stats*100, tie/stats*100, duration/stats, i+1))
+			duration=0
+			alice=0
+			bob=0
+			tie=0
+			
+			stats=0
 	
 def init_ai(name): 
 	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
