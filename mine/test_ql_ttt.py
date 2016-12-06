@@ -96,14 +96,9 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 	win=is_win(board)
 
 	points_ai=100*win
-	points_ai2=-points_ai
 	if points_ai==0:
-		points_ai=None
-		points_ai2=None
-
-	ai2.learn(board2+board, points_ai2)
-	if win:
-		ai.learn(board+board2, points_ai) 
+		points_ai=None 
+	ai.learn(board+board2, points_ai)  # we learn the AI what happened
 
 	tie=False
 	if not win:
