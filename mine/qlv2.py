@@ -70,6 +70,7 @@ class Qlearning():
 		max_points=None
 		best_actions=[] 
 		unknown_actions=[]
+		max_=0
 		avg=0 # average outcome of the status to come
 		sum_=0
 		cpt=0 
@@ -78,6 +79,8 @@ class Qlearning():
 			if not(p is None):
 				sum_+=p
 				cpt+=1 
+				if p>max_:
+					max_=p
 			if not(p is None):
 				if max_points is None:
 					max_points=p
@@ -89,7 +92,7 @@ class Qlearning():
 				unknown_actions.append(i) 
 		if cpt>0:
 			avg=sum_/cpt
-			self.array_points[array_to_integer(state)]=self.alpha*avg 
+			self.array_points[array_to_integer(state)]=self.alpha*max_ 
 		if len(best_actions)==0:
 			best_action=random.choice(list_actions)
 			if self.verbose:
