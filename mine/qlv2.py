@@ -37,6 +37,7 @@ class Qlearning():
 		self.nn.min_J_cv=0.01
 		self.nn.max_cpt=10000 
 		self.nn.nn.filename='nn09.tmp' 
+		self.nn.load_synapses()
 		self.verbose=False
 		self.X=[]
 		self.y=[]
@@ -46,18 +47,18 @@ class Qlearning():
 		self.history_actions=[] # will be feed by 'pick_action'
 
 	def pick_action(self, state, list_actions):
-		outputs=[] # possible outputs for each action
-		points=[] # points available for a given action 
+		outputs={} # possible outputs for each action
+		points={} # points available for a given action 
 		for i in list_actions: 
 			a=np.zeros(self.max_action)
 			a[i]=1 
 			input_=np.concatenate([state, a]) # input should be a line
 			res=self.nn.FP(input_)
 			output=res>=0.5
-			outputs.append(output) # it is a matrice here 
+			outputs[i]=output # it is a matrice here 
 			new_state=array_to_integer(output)
 			b=self.array_points.get(new_state)
-			points.append(b)
+			points[i]=b
 			if self.verbose:
 				if b is None:
 					b="?"
@@ -72,7 +73,7 @@ class Qlearning():
 		avg=0 # average outcome of the status to come
 		sum_=0
 		cpt=0 
-		for i in range(len(list_actions)): 
+		for i in list_actions:
 			p=points[i]
 			if not(p is None):
 				sum_+=p
@@ -83,7 +84,7 @@ class Qlearning():
 				if p > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
 																# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
 					best_actions=[]
-				best_actions.append(i) 
+				best_actions.append(i)
 			else:
 				unknown_actions.append(i) 
 		if cpt>0:

@@ -48,29 +48,20 @@ def print_game(alice, bob):
 	print("─┼─┼─")
 	print("%s│%s│%s" % (c[6],c[7],c[8]))
 
-def print_history(array):
+def print_history(array, winner):
 	for i in range(3):
 		s=""
 		s2=""
 		for h in array:
-			a=h[i:i+3]
+			a=h[i*3:(i*3)+3]
 			b=["X" if i==1 else "O" if i==2 else "?" if i!=0 else " " for i in a]
 			s+="%s│%s│%s " % (b[0], b[1], b[2])
 			s2+="─┼─┼─ "
 		print(s)
+		if i==1:
+			s2+=" winner:%s" % winner
 		if i < 2:
 			print(s2)
-
-def print_game_history(history):
-	c=["X" if alice[i]==1 else "O" if bob[i]==1 else " " for i in range(9)]
-	print("%s│%s│%s" % (c[0],c[1],c[2]))
-	print("─┼─┼─")
-	print("%s│%s│%s" % (c[3],c[4],c[5]))
-	print("─┼─┼─")
-	print("%s│%s│%s" % (c[6],c[7],c[8]))
-
-
-
 
 def list_or(list1,list2):
 	return [a or b for a,b in zip(list1,list2)]
@@ -98,6 +89,8 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 
 	if verbose:
 		print("I ask %s to play" % ai.name)
+	if verbose:
+		print("available actions are %s" % available_actions)
 	action=ai.pick_action(status, available_actions) 
 	board[action]=1 
 	win=is_win(board)
@@ -111,7 +104,13 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 	ai2.learn(board2+board, points_ai2)
 	if win:
 		ai.learn(board+board2, points_ai) 
-	return win, board, board2
+
+	tie=False
+	if not win:
+		if sum(board)+sum(board2)==9:
+			tie=True
+
+	return tie, win, board, board2
 
 
 def play(verbose):
@@ -125,39 +124,69 @@ def play(verbose):
 	tie=False
 	cpt=0
 	history=[]
+	winner=""
 	while (not win) and (not tie):
 		cpt+=1
 		if cpt>22:
 			raise Exception("loop")
-		win, board_alice, board_bob=play_AI(alice, bob, board_alice, board_bob, verbose)
+		tie, win, board_alice, board_bob=play_AI(alice, bob, board_alice, board_bob, verbose)
+		if win:
+			winner="alice"
 		if verbose:
 			print_game(board_alice, board_bob) 
 
 		h=[a+b*2 for a,b in zip(board_alice, board_bob)]
 		history.append(h)
 
-		if sum(board_alice)+sum(board_bob)==9:
-			tie=True
-		else: 
-			win, board_bob, board_alice=play_AI(bob, alice, board_bob, board_alice, verbose)
+		if (not tie) and (not win):
+			tie, win, board_bob, board_alice=play_AI(bob, alice, board_bob, board_alice, verbose)
+			if win:
+				winner="bob"
 			if verbose:
 				print_game(board_alice, board_bob) 
-		if sum(board_alice)+sum(board_bob)==9:
-			tie=True 
 
 		h=[a+b*2 for a,b in zip(board_alice, board_bob)]
 		history.append(h)
-	return history
+		if tie:
+			winner="tie"
+
+	return winner,history
 
 
-def loop(cpt):
-	verbose=cpt<=10
-	for i in range(cpt):
-		history=play(verbose)
-		if cpt<=100:
-			print_history(history)
+def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
+	bob=0
+	alice=0
+	tie=0
+	stats=0
+	if verbose_stats==True:
+		verbose_stats=100 # default value
 
 
+	if count>100:
+		if verbose_detail:
+			print("are you sure u want detail for more than 100 iterations ? use force=True then")
+		if count > 1000:
+			if verbose_games:
+				print("are you sure u want the history for more than 1000 iterations ? use force=True then")
+
+	for i in range(count):
+		stats+=1
+		winner,history=play(verbose_detail)
+		if winner=="tie":
+			tie+=1
+		if winner=="alice":
+			alice+=1
+		if winner=="bob":
+			bob+=1
+
+		if verbose_games:
+			print_history(history,winner)
+
+		if stats==verbose_stats:
+			stats=0
+			if verbose_stats:
+				print("Alice %.0f, Bob %.0f, Tie %.0f, count %d" % (alice/i*100, bob/i*100, tie/i*100, i+1))
+	
 def init_ai(name): 
 	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
 	ai.nn.init_syns([27,18],27,18) # 2 hidden layers 
