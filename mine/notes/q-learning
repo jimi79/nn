@@ -208,3 +208,16 @@ easy.
 so, state 1 stored as a bool, and actions are from 0 to 9 (each is a bool)
 
 
+----------------
+
+i may need two nn
+
+one that knows how to play, another one that knows what might be the next move from the opponent.  
+I thought adding them together, i don't understand why it's a bad thing actually
+I actually need n NN, that can foresee what will happening, after your turn
+And i'm doing specific stuff here...
+
+I can go super specific, and store all the outcomes here, and then do all the branches, and see which one is best, etc.
+But this is so specific, and that is the purpose of q learning
+
+

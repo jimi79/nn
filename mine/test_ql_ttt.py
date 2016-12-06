@@ -83,7 +83,7 @@ def is_win(list_):
 # that is more like q learning, because you don't loose by your own action. You lose because of other's action
 
 
-def play_AI(ai, board, board2, verbose=True): 
+def play_AI(ai, ai2, board, board2, verbose=True): 
 	status=board+board2
 	available_actions=get_available_actions(list_or(board, board2))
 
@@ -103,9 +103,15 @@ def play_AI(ai, board, board2, verbose=True):
 	points_ai=None 
 	if win:
 		points_ai=1000
+		points_ai2=-1000
 	if tie:
 		points_ai=100
-	ai.learn(board+board2, points_ai)  # we learn the AI what happened
+		points_ai2=100
+
+	ai2.learn(board2+board, points_ai)  # we learn the AI what happened
+	if win:
+		ai.learn(board+board2, points_ai)  # we learn the AI what happened
+
 
 	return tie, win, board, board2
 
@@ -126,7 +132,7 @@ def play(verbose):
 		cpt+=1
 		if cpt>22:
 			raise Exception("loop")
-		tie, win, board_alice, board_bob=play_AI(alice, board_alice, board_bob, verbose)
+		tie, win, board_alice, board_bob=play_AI(alice, bob, board_alice, board_bob, verbose)
 		if win:
 			winner="alice"
 		if verbose:
@@ -136,7 +142,7 @@ def play(verbose):
 		history.append(h)
 
 		if (not tie) and (not win):
-			tie, win, board_bob, board_alice=play_AI(bob, board_bob, board_alice, verbose)
+			tie, win, board_bob, board_alice=play_AI(bob, alice, board_bob, board_alice, verbose)
 			if win:
 				winner="bob"
 			if verbose:
