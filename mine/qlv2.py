@@ -37,7 +37,6 @@ class Qlearning():
 		self.nn.min_J_cv=0.01
 		self.nn.max_cpt=10000 
 		self.nn.nn.filename='nn09.tmp' 
-		self.nn.load_synapses()
 		self.verbose=False
 		self.X=[]
 		self.y=[]
