@@ -80,3 +80,13 @@ morpion
 for morpion, a nn isn't necessary
 
 -- nn : it should have a function scale for input, but a function turn into binary for output, and back. so i don't have to give it a binary y, that's not the request's job
+
+--------
+My NN should predict the opponent's move, not his. Well for that particular case that is Tic Tac Toe.
+Meaning i need a procedure, that may be defined, that i will start before Training and noting status. That will optimize some stuff maybe
+
+Meaning that the NN will take as an input only the status of the board, and will guess the next status
+
+That's why i need two of them. one to learn what impact has my action, and one to see other's impact. AS long as it stays within a turn, that's ok.
+
+That's 2 nn per ql.

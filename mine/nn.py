@@ -265,7 +265,6 @@ class Train:
 				self.BP(y)
 				if self.nn.check_every_n_steps!=None: 
 					if (cpt % self.nn.check_every_n_steps == 0): 
-						print("cpt = %d, " % cpt, end="")
 						if self.test_cost_function():
 							break
 				if self.nn.save_every_n_steps!=-1:

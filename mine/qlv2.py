@@ -35,6 +35,7 @@ class Qlearning():
 		self.array_points={}
 		self.alpha=0.8 # factor with which i should use the max
 		self.filename=None
+		self.logfilename=None
 
 
 
@@ -52,6 +53,13 @@ class Qlearning():
 		self.X=[]
 		self.y=[]
 
+	def append_log(self, text):
+		if not self.logfilename is None:
+			with open(self.logfilename, "a") as f:
+				f.write("%s\n" % text)
+
+
+
 	def restart(self): 
 		self.history_status=[] # will be feed by 'learn'
 		self.history_actions=[] # will be feed by 'pick_action'
@@ -59,6 +67,7 @@ class Qlearning():
 	def pick_action(self, state, list_actions):
 		outputs={} # possible outputs for each action
 		points={} # points available for a given action 
+		s=""
 		for i in list_actions: 
 			a=np.zeros(self.max_action)
 			a[i]=1 
@@ -69,18 +78,17 @@ class Qlearning():
 			new_state=array_to_integer(output)
 			b=self.array_points.get(new_state)
 			points[i]=b
-			if self.verbose:
-				if b is None:
-					b="?"
-				else:
-					b=str(b)
-				print("%d+%d=%d(%s points)," % (array_to_integer(state),i,new_state,b),end="") 
+			if b is None:
+				b="?"
+			else:
+				b=str(b)
+			s+="%d+%d=%d(%s points)," % (array_to_integer(state),i,new_state,b)
 		if self.verbose:
-			print("")
+			print(s)
+		self.append_log(s)
 		max_points=None
 		best_actions=[] 
 		unknown_actions=[]
-		max_=0
 		avg=0 # average outcome of the status to come
 		sum_=0
 		cpt=0 
@@ -89,21 +97,22 @@ class Qlearning():
 			if not(p is None):
 				sum_+=p
 				cpt+=1 
-				if p>max_:
-					max_=p
-			if not(p is None):
 				if max_points is None:
 					max_points=p
-				if p > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
-																# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
 					best_actions=[]
+				if p > max_points:
+					best_actions=[]
+					max_points=p
 				if p >= max_points:
 					best_actions.append(i)
 			else:
 				unknown_actions.append(i) 
+
+		# from time to time : encourage unknown paths
 		if cpt>0:
 			avg=sum_/cpt
-			self.array_points[array_to_integer(state)]=self.alpha*max_ 
+			self.array_points[array_to_integer(state)]=self.alpha*max_points
+			self.append_log("max outcome for state %d is %d, so it is worth %d" % (array_to_integer(state), max_points, self.array_points[array_to_integer(state)]))
 		if len(best_actions)==0:
 			best_action=random.choice(list_actions)
 			if self.verbose:
@@ -151,6 +160,7 @@ class Qlearning():
 			# got to handle points here.
 			if points!=None:
 				state=array_to_integer(newstate)
+				self.append_log("state %d is worth %d" % (array_to_integer(newstate), points))
 				if self.verbose:
 					print("I've got to remember that the state %d is worth %d" % (array_to_integer(newstate), points))
 				self.array_points[state]=points 

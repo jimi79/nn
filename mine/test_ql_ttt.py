@@ -218,7 +218,9 @@ def init_ai(name):
 	#ai.min_cpt_since_last_train=100 # don't train every time
 	ai.cpt_since_last_train=0
 	ai.verbose=True
-	ai.filename="%s_ttt.tmp" % name
+	ai.filename="%s_ttt_ql.tmp" % name
+	ai.logfilename="%s_ttt_ql.log" % name 
+
 	ai.nn.verbose=True
 	ai.nn.init_syns([27],27,18) # 2 hidden layers 
 	ai.nn.nn.filename="%s_ttt_nn.tmp" % name
@@ -259,6 +261,17 @@ def save():
 def load():
 	alice.try_load()
 	bob.try_load() 
+
+def print_ai_guess_from_int(integer, action):
+	act=copy.copy(zeros)
+	act[actions]=1
+	print_game_from_int(integer)
+	res=alice.nn.FP(np.array(qlv2.integer_to_array(136400)+act))>0.5
+	res=qlv2.array_to_integer(res)
+	print("res=%d" % res)
+	print_game_from_int(res)
+
+
 
 # the ql that is used. i make it global so i can study it easily
 alice=init_ai("alice")
