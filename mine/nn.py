@@ -144,7 +144,7 @@ class Syns:
 	def load(self, filename):
 		self.vals = pickle.load(open(filename, "rb"))
 
-class NN:
+class Params:
 	def __init__(self):
 		self.check_every_n_steps = 100
 		self.save_every_n_steps = 1000
@@ -158,23 +158,23 @@ class NN:
 
 class Train: 
 	def __init__(self): 
-		self.nn = NN()
+		self.params = Params()
 		self.datas = Datas() 
 
 	def try_load_synapses(self):
-		if os.path.exists(self.nn.filename):
-			if self.nn.verbose:
-				print("loading temp synapses values, file %s" % self.nn.filename)
-			self.nn.syns.load(self.nn.filename) 
-			self.nn.synapses_empty=False
+		if os.path.exists(self.params.filename):
+			if self.params.verbose:
+				print("loading temp synapses values, file %s" % self.params.filename)
+			self.params.syns.load(self.params.filename) 
+			self.params.synapses_empty=False
 			return True
 		else:
 			return False
 
 	def init_syns(self, sizes, size_first_layer, size_last_layer): 
 		sizes.append(size_last_layer)
-		self.nn.syns = Syns(sizes, size_first_layer)
-		self.nn.synapses_empty=True
+		self.params.syns = Syns(sizes, size_first_layer)
+		self.params.synapses_empty=True
 
 	def init_syns_for_trainset(self, sizes):
 		size_first_layer=self.datas.trainset.X.shape[1]
@@ -182,7 +182,7 @@ class Train:
 		self.init_syns(sizes, size_first_layer, size_last_layer) 
 
 	def FPdl(self, X): # FP that return the whole datalayer
-		syns=self.nn.syns
+		syns=self.params.syns
 		countlayers = len(syns.vals)
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 		datalayers[0].a = X 
@@ -205,7 +205,7 @@ class Train:
 		datalayers=self.datalayers
 		m=y.shape[0]
 		datalayers[-1].s = datalayers[-1].a - y
-		syns=self.nn.syns
+		syns=self.params.syns
 		for i in range(len(datalayers) - 2, -1, -1): # that will do datalayers - 2 up to 0
 			s = datalayers[i+1].s
 			if i < len(datalayers) - 2:
@@ -219,8 +219,8 @@ class Train:
 			diffs[i] = datalayers[i].a.T.dot(datalayers[i+1].s) 
 			if i < len(datalayers) - 2:
 				diffs[i] = diffs[i][:,1:] 
-			diffs[i] += self.nn.lambda_ * syns.vals[i] / m; # every synape is updated here
-			syns.vals[i] -= self.nn.alpha * (diffs[i] / m)
+			diffs[i] += self.params.lambda_ * syns.vals[i] / m; # every synape is updated here
+			syns.vals[i] -= self.params.alpha * (diffs[i] / m)
 
 	def cost_function(self, yguess, yexpected):
 		m=yguess.shape[0] 
@@ -229,23 +229,23 @@ class Train:
 		return J
 
 	def save(self):
-		if self.nn.filename != "":
-			self.nn.syns.save(self.nn.filename) 
-			if self.nn.verbose:
+		if self.params.filename != "":
+			self.params.syns.save(self.params.filename) 
+			if self.params.verbose:
 				print("saved")
 
 	def test_cost_function(self):
 		res=False
 		J = self.check(self.datas.trainset) 
 		J_cv = self.check(self.datas.cvset) 
-		if J_cv <= self.nn.min_J_cv:
+		if J_cv <= self.params.min_J_cv:
 			res=True
-		if self.nn.verbose:
+		if self.params.verbose:
 			print("Jtrain = %f, Jcv = %f" % (J, J_cv)) 
 		return res 
 
 	def train(self): # desc is only for the hidden layers 
-		if self.nn.synapses_empty:
+		if self.params.synapses_empty:
 			self.try_load_synapses()
 		y = self.datas.trainset.y
 		error=999999
@@ -255,24 +255,24 @@ class Train:
 			if self.verbose:
 				print("network already ok")
 		else: 
-			if self.nn.verbose:
+			if self.params.verbose:
 				print("training") 
-			while ((cpt < self.nn.max_cpt) or (self.nn.max_cpt == -1)):
-				self.nn.synapses_empty=False
+			while ((cpt < self.params.max_cpt) or (self.params.max_cpt == -1)):
+				self.params.synapses_empty=False
 				cpt = cpt + 1
 				datalayers=self.FPdl(self.datas.trainset.X) # will update a 
 				np.seterr(divide='ignore')
 				self.BP(y)
-				if self.nn.check_every_n_steps!=None: 
-					if (cpt % self.nn.check_every_n_steps == 0): 
+				if self.params.check_every_n_steps!=None: 
+					if (cpt % self.params.check_every_n_steps == 0): 
 						if self.test_cost_function():
 							break
-				if self.nn.save_every_n_steps!=-1:
-					if (cpt % self.nn.save_every_n_steps == 0): 
+				if self.params.save_every_n_steps!=-1:
+					if (cpt % self.params.save_every_n_steps == 0): 
 						self.save() 
-			if self.nn.verbose:
+			if self.params.verbose:
 				print("ended up after %d loops" % cpt)
-		return self.nn.syns.vals
+		return self.params.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example
 		a = val.reshape(20,20) > 0.5
@@ -286,7 +286,7 @@ class Train:
 
 	def check(self, datas): # datas is the type. Will return the cost function, and the number of different values
 														# r should be in the object maybe. or not 
-		syns=self.nn.syns
+		syns=self.params.syns
 		countlayers = len(syns.vals) 
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
 		yguess = self.FP(datas.X) # will update a 
