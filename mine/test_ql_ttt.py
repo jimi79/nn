@@ -26,6 +26,8 @@ import copy
 import importlib
 import pdb
 import qlv2
+import sys
+import numpy as np
 
 
 
@@ -48,7 +50,7 @@ def print_game(alice, bob):
 	print("─┼─┼─")
 	print("%s│%s│%s" % (c[6],c[7],c[8]))
 
-def print_history(array, winner):
+def print_history(array, winner=None):
 	for i in range(3):
 		s=""
 		s2=""
@@ -59,7 +61,8 @@ def print_history(array, winner):
 			s2+="─┼─┼─ "
 		print(s)
 		if i==1:
-			s2+=" winner:%s" % winner
+			if not winner is None:
+				s2+=" winner:%s" % winner
 		if i < 2:
 			print(s2)
 
@@ -101,6 +104,7 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 			tie=True
 
 	points_ai=None 
+	points_ai2=None 
 	if win:
 		points_ai=1000
 		points_ai2=-1000
@@ -108,17 +112,16 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 		points_ai=100
 		points_ai2=100
 
-	ai2.learn(board2+board, points_ai)  # we learn the AI what happened
+	ai2.learn(board2+board, points_ai2)  # we learn the AI what happened
 	if win:
 		ai.learn(board+board2, points_ai)  # we learn the AI what happened
-
 
 	return tie, win, board, board2
 
 
 def play(verbose):
-	alice.verbose=verbose
-	bob.verbose=verbose
+	global alice
+	global bob
 	board_alice=[0 for i in range(9)]
 	board_bob=copy.copy(board_alice)
 	alice.restart()
@@ -155,23 +158,32 @@ def play(verbose):
 
 	return winner,history
 
-
-def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
-	bob=0
-	alice=0
+def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False, force=False, verbose_nn=False):
+	global alice
+	global bob
+	score_bob=0
+	score_alice=0
 	tie=0
 	stats=0
 	duration=0
 	if verbose_stats==True:
-		verbose_stats=100 # default value
+		verbose_stats=100 # default value 
 
+	alice.verbose=verbose_detail
+	bob.verbose=verbose_detail
+	alice.nn.nn.verbose=verbose_nn
+	bob.nn.nn.verbose=verbose_nn
 
 	if count>100:
 		if verbose_detail:
-			print("are you sure u want detail for more than 100 iterations ? use force=True then")
+			if not force:
+				print("are you sure u want detail for more than 100 iterations ? use force=True then")
+				return
 		if count > 1000:
 			if verbose_games:
-				print("are you sure u want the history for more than 1000 iterations ? use force=True then")
+				if not force:
+					print("are you sure u want the history for more than 1000 iterations ? use force=True then")
+					return
 
 	for i in range(count):
 		stats+=1
@@ -180,45 +192,79 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False):
 		if winner=="tie":
 			tie+=1
 		if winner=="alice":
-			alice+=1
+			score_alice+=1
 		if winner=="bob":
-			bob+=1
+			score_bob+=1
 
 		if verbose_games:
 			print_history(history,winner)
 
 		if stats==verbose_stats:
 			if verbose_stats:
-				print("For the last %d games : alice %.0f, Bob %.0f, Tie %.0f, duration game %.2f, count %d" % (verbose_stats, alice/stats*100, bob/stats*100, tie/stats*100, duration/stats, i+1))
+				print("For the last %d games : alice %.2f, Bob %.2f, Tie %.2f, duration game %.2f, count %d" % (verbose_stats, score_alice/stats*100, score_bob/stats*100, tie/stats*100, duration/stats, i+1))
 			duration=0
-			alice=0
-			bob=0
+			score_alice=0
+			score_bob=0
 			tie=0
 			
 			stats=0
 	
 def init_ai(name): 
 	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
-	ai.nn.init_syns([27,18],27,18) # 2 hidden layers 
-	ai.min_data_to_train=5000 # default value
-	ai.max_data_to_train=7000 # default value
-	ai.min_cpt_since_last_train=1000 # don't train every time
-	ai.nn.nn.save_every_n_steps=-1
+	ai.min_data_to_train=100000 # default value
+	#ai.min_data_to_train=100 # default value
+	ai.max_data_to_train=200000 # default value
+	ai.min_cpt_since_last_train=100000 # don't train every time
+	#ai.min_cpt_since_last_train=100 # don't train every time
 	ai.cpt_since_last_train=0
-	ai.nn.min_J_cv=0.05
 	ai.verbose=True
+	ai.filename="%s_ttt.tmp" % name
 	ai.nn.verbose=True
-	ai.nn.nn.filename="%s_ttt.tmp" % name
-	ai.nn.load_synapses() 
-	ai.nn.nn.max_cpt=100
-	ai.nn.nn.check_every_n_steps=10
+	ai.nn.init_syns([27],27,18) # 2 hidden layers 
+	ai.nn.nn.filename="%s_ttt_nn.tmp" % name
+	ai.nn.try_load_synapses() 
+	ai.nn.nn.max_cpt=2000
+	ai.nn.min_J_cv=0.05
+	ai.nn.nn.check_every_n_steps=100
 	ai.max_action=9
 	ai.name=name
+	ai.try_load()
 	return ai
+
+def print_game_from_int(integer):
+	a=qlv2.integer_to_array(integer)
+	b=a[0:9]
+	c=a[9:19]
+	print(b)
+	print(c)
+	print_game(b,c)
+
+def print_game_from_dataset(dataset, idx):
+	X=dataset.X[idx]
+	y=dataset.y[idx]
+	a=X[0:9]
+	b=X[9:18]
+	act=X[18:]
+	c=y[0:9]
+	d=y[9:18]
+	print_game(a,b)
+	print("Action %d :" % np.where(act)[0][0])
+	print_game(c,d)
+
+
+def save():
+	alice.save()
+	bob.save()
+
+def load():
+	alice.try_load()
+	bob.try_load() 
 
 # the ql that is used. i make it global so i can study it easily
 alice=init_ai("alice")
 bob=init_ai("bob") 
 all_actions=list(range(1,11))
 
-
+if len(sys.argv)>1:
+	if sys.argv[1]=='test':
+		loop(20000, verbose_detail=True, verbose_games=True, force=True)

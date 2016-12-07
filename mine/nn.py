@@ -115,7 +115,7 @@ class Datas:
 		self.testset = Set(c[train_part + cv_part:,0:-y_size], c[train_part + cv_part:,-y_size:]) 
 
 	def split_half(self):
-		half=round(self.raw.X/2)
+		half=round(len(self.raw.X)/2)
 		self.split(half, half)
 
 
@@ -161,12 +161,15 @@ class Train:
 		self.nn = NN()
 		self.datas = Datas() 
 
-	def load_synapses(self):
+	def try_load_synapses(self):
 		if os.path.exists(self.nn.filename):
 			if self.nn.verbose:
 				print("loading temp synapses values, file %s" % self.nn.filename)
 			self.nn.syns.load(self.nn.filename) 
 			self.nn.synapses_empty=False
+			return True
+		else:
+			return False
 
 	def init_syns(self, sizes, size_first_layer, size_last_layer): 
 		sizes.append(size_last_layer)
@@ -243,7 +246,7 @@ class Train:
 
 	def train(self): # desc is only for the hidden layers 
 		if self.nn.synapses_empty:
-			self.load_synapses()
+			self.try_load_synapses()
 		y = self.datas.trainset.y
 		error=999999
 		cpt = 0
@@ -262,12 +265,12 @@ class Train:
 				self.BP(y)
 				if self.nn.check_every_n_steps!=None: 
 					if (cpt % self.nn.check_every_n_steps == 0): 
+						print("cpt = %d, " % cpt, end="")
 						if self.test_cost_function():
 							break
 				if self.nn.save_every_n_steps!=-1:
 					if (cpt % self.nn.save_every_n_steps == 0): 
 						self.save() 
-			self.save() 
 			if self.nn.verbose:
 				print("ended up after %d loops" % cpt)
 		return self.nn.syns.vals

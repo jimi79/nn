@@ -4,6 +4,8 @@ import importlib
 import nn
 import numpy as np
 import random
+import os
+import pickle
 
 
 
@@ -13,30 +15,39 @@ import random
 def array_to_integer(array):
 	return sum([array[i]*(2**i) for i in range(len(array))])
 
+def integer_to_array(integer):
+	a=[int(x) for x in bin(integer)[2:]]	
+	a.reverse()
+	while len(a)<18:
+		a.append(0)
+	return a
+
 
 class Qlearning():
 	def __init__(self, max_state, max_action):
 # max_action is all state included. it's just to prepare a input for the NN large enough
 		self.max_state=max_state
 		self.max_action=max_action 
-		self.min_data_to_train=1000 # default value
-		self.max_data_to_train=5000 # default value
-		self.min_cpt_since_last_train=100 # don't train every time
+		self.min_data_to_train=5000 # default value
+		self.max_data_to_train=50000 # default value
+		self.min_cpt_since_last_train=1000 # don't train every time
 		self.cpt_since_last_train=0 
 		self.array_points={}
 		self.alpha=0.8 # factor with which i should use the max
-
+		self.filename=None
 
 
 
 # nn setup
 		self.nn=nn.Train()
 		self.nn.check_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
-		self.nn.save_every_n_steps=-1
+		self.nn.save_every_n_steps=1000
 		self.nn.nn.verbose=False
 		self.nn.min_J_cv=0.01
-		self.nn.max_cpt=10000 
+		self.nn.max_cpt=1000 
 		self.nn.nn.filename='nn09.tmp' 
+		self.nn.nn.alpha=1
+		self.nn.nn.lambda_=3
 		self.verbose=False
 		self.X=[]
 		self.y=[]
@@ -86,7 +97,8 @@ class Qlearning():
 				if p > max_points: #here : from time to time, if an outcomme is None (or 0 ?), then it will be considered as good enough, so that the computer doesn't stuck to a winning position if there are multiples path.
 																# or maybe i should just lower all my values in my q learning array from time to time to force it to reevaluate some positions. Or randomize that array. I've got to think about it, that looks again like NN
 					best_actions=[]
-				best_actions.append(i)
+				if p >= max_points:
+					best_actions.append(i)
 			else:
 				unknown_actions.append(i) 
 		if cpt>0:
@@ -131,10 +143,10 @@ class Qlearning():
 				if self.cpt_since_last_train >= self.min_cpt_since_last_train:
 					self.nn.datas.raw.X=np.array(self.X)
 					self.nn.datas.raw.y=np.array(self.y)
-					self.nn.datas.split() # split half
+					self.nn.datas.split_half() # split half
 					self.nn.train()
 					self.cpt_since_last_train=0
-					self.nn.save()
+					#self.nn.save()
 			
 			# got to handle points here.
 			if points!=None:
@@ -143,3 +155,13 @@ class Qlearning():
 					print("I've got to remember that the state %d is worth %d" % (array_to_integer(newstate), points))
 				self.array_points[state]=points 
 		self.history_status.append(newstate) 
+
+	def save(self):
+		pickle.dump(self.array_points, open(self.filename, 'wb'))
+
+	def try_load(self):
+		if os.path.exists(self.filename):
+			self.array_points=pickle.load(open(self.filename, 'rb'))
+			return True
+		else:
+			return False
