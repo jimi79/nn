@@ -80,3 +80,5 @@ morpion
 for morpion, a nn isn't necessary
 
 -- nn : it should have a function scale for input, but a function turn into binary for output, and back. so i don't have to give it a binary y, that's not the request's job
+
+modify test_ttt to handle the history for both AI
