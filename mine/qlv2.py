@@ -99,48 +99,30 @@ class Qlearning():
 
 	def pick_action(self, state, list_actions):
 		self.last_board=state
-		outputs={} # possible outputs for each action
 		points={} # points available for a given action 
 		s="" 
-
-#loop
-
-# first nn_action, then check if win,feed the win list
-# else: nn_opponent, and feed the list of points. update the status points too
-
-# if win, put in wins list
-# if points=None, put in donknow list
-# if points>0, put in willwin
-# if points<0, put in willlose
-
-#then, pick action in win list if any
-#else, pick action in willwin list (points>0) if any
-#else, pick action in dontknow list (points=None) if any
-#else, pick action if willose list (points<0) if any
-#else : not possible, bug, raise exception
-
 		n_winlist=[] # that action leads to a direct win # n_ like now
 		n_willwin=[] # that action leads to a probable win
 		n_maxpoint_pos=None # max points for a good action
 		n_maxpoint_neg=None # max points for a bad action
+		n_maxpoint=None
 		n_dontknow=[] # 
 		n_willlose=[] # that action leads to a possible loss
-		
-
 		for i in list_actions: 
 			a=np.zeros(self.max_action)
 			a[i]=1 
 			input_=np.concatenate([state, a]) # input should be a line
 			res=self.nn_action.nn.FP(input_)
 			output=res>=0.5
-			outputs[i]=output # it is a matrice here 
-			new_state=array_to_integer(output)
-
+			new_state=array_to_integer(output) 
 			p=None
 			if not self.winlist.get(new_state) is None:
 				ps="win"
 				n_winlist.append(i)
-			else:
+				p=1000
+			else: 
+				res_op=self.nn_opponent.nn.FP(output) 
+				new_state=array_to_integer(res_op) 
 				p=self.points.get(new_state)
 				ps="?"
 				if not p is None:
@@ -163,6 +145,17 @@ class Qlearning():
 					n_dontknow.append(i) 
 
 			self.append_log("%d+%d=%d(%s points)" % (array_to_integer(state),i,new_state,ps)) # %s to handle None 
+			if not p is None:
+				if n_maxpoint is None:
+					n_maxpoint=p
+				else:
+					if p > n_maxpoint:
+						n_maxpoint=p
+
+		if not n_maxpoint is None:
+			val=self.alpha*n_maxpoint
+			self.points[array_to_integer(state)]=val
+			self.append_log("update state %d with %0.2f points" % (array_to_integer(state), val))
 
 		action=None
 		if len(n_winlist)!=0:
@@ -222,11 +215,11 @@ class Qlearning():
 			self.winlist[state]=True
 
 	def save(self):
-		pickle.dump(self.array_points, open(self.filename, 'wb'))
+		pickle.dump(self.points, open(self.filename, 'wb'))
 
 	def try_load(self):
 		if os.path.exists(self.filename):
-			self.array_points=pickle.load(open(self.filename, 'rb'))
+			self.points=pickle.load(open(self.filename, 'rb'))
 			return True
 		else:
 			return False

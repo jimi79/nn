@@ -29,6 +29,38 @@ import qlv2
 import sys
 import numpy as np
 
+def init_ai(name): 
+	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
+	ai.verbose=True
+	ai.filename="%s_ttt_ql.tmp" % name
+	ai.logfilename="%s_ttt_ql.log" % name 
+
+	ai.nn_action.min_cpt=1000
+	ai.nn_action.min_data=1000
+	ai.nn_action.max_data=2000 
+	ai.nn_action.nn.params.verbose=True
+	ai.nn_action.nn.init_syns([27],27,18) # 2 hidden layers 
+	ai.nn_action.nn.params.filename="%s_ttt_nn_action.tmp" % name
+	ai.nn_action.nn.try_load_synapses() 
+	ai.nn_action.nn.params.max_cpt=2000
+	ai.nn_action.nn.params.min_J_cv=0.1
+	ai.nn_action.nn.params.check_every_n_steps=100
+
+	ai.nn_opponent.min_cpt=5000
+	ai.nn_opponent.min_data=5000
+	ai.nn_opponent.max_data=20000 
+	ai.nn_opponent.nn.params.verbose=True
+	ai.nn_opponent.nn.init_syns([],18,18) # 2 hidden layers 
+	ai.nn_opponent.nn.params.filename="%s_ttt_nn_opponent.tmp" % name
+	ai.nn_opponent.nn.try_load_synapses() 
+	ai.nn_opponent.nn.params.min_J_cv=0.2
+	ai.nn_opponent.nn.check_every_n_steps=100 
+
+	ai.max_action=9
+	ai.set_name(name)
+	ai.try_load()
+	return ai
+
 
 
 zeros=[0,0,0,0,0,0,0,0,0]
@@ -41,6 +73,11 @@ wins.append([0,1,0,0,1,0,0,1,0])
 wins.append([0,0,1,0,0,1,0,0,1])
 wins.append([1,0,0,0,1,0,0,0,1])
 wins.append([0,0,1,0,1,0,1,0,0])
+
+
+alice=init_ai("alice")
+bob=init_ai("bob") 
+all_actions=list(range(1,11)) 
 
 def print_game(alice, bob):
 	c=["X" if alice[i]==1 else "O" if bob[i]==1 else " " for i in range(9)]
@@ -123,8 +160,6 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 
 
 def play(verbose):
-	global alice
-	global bob
 	board_alice=[0 for i in range(9)]
 	board_bob=copy.copy(board_alice)
 	alice.restart()
@@ -164,14 +199,24 @@ def play(verbose):
 
 	return winner,history
 
-def loop(count, alice, bob, verbose_games=False, verbose_detail=False, verbose_stats=False, force=False, verbose_training=False):
+def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, force=None, verbose_training=None):
 	score_bob=0
 	score_alice=0
 	tie=0
 	stats=0
 	duration=0
-	if verbose_stats==True:
-		verbose_stats=100 # default value 
+	if verbose_stats==None:
+		verbose_stats=1000 # default value 
+
+	if verbose_games is None:
+		verbose_games=count<101
+	if verbose_detail is None:
+		verbose_detail=count<11
+	if verbose_stats is None:
+		verbose_stats=True
+	if verbose_training is None:
+		verbose_training=count<101
+
 
 	alice.set_verbose(verbose_detail)
 	bob.set_verbose(verbose_detail)
@@ -212,44 +257,10 @@ def loop(count, alice, bob, verbose_games=False, verbose_detail=False, verbose_s
 			tie=0 
 			stats=0
 	
-def init_ai(name): 
-	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
-	ai.verbose=True
-	ai.filename="%s_ttt_ql.tmp" % name
-	ai.logfilename="%s_ttt_ql.log" % name 
-
-	ai.nn_action.min_cpt=1000
-	ai.nn_action.min_data=1000
-	ai.nn_action.max_data=2000 
-	ai.nn_action.verbose=True
-	ai.nn_action.nn.init_syns([27],27,18) # 2 hidden layers 
-	ai.nn_action.nn.params.filename="%s_ttt_nn_action.tmp" % name
-	ai.nn_action.nn.try_load_synapses() 
-	ai.nn_action.nn.params.max_cpt=2000
-	ai.nn_action.nn.params.min_J_cv=0.05
-	ai.nn_action.nn.params.check_every_n_steps=100
-
-	ai.nn_opponent.min_cpt=1000
-	ai.nn_opponent.min_data=1000
-	ai.nn_opponent.max_data=2000 
-	ai.nn_opponent.nn.params.verbose=True
-	ai.nn_opponent.nn.init_syns([],18,18) # 2 hidden layers 
-	ai.nn_opponent.nn.params.filename="%s_ttt_nn_opponent.tmp" % name
-	ai.nn_opponent.nn.try_load_synapses() 
-	ai.nn_opponent.nn.params.min_J_cv=0.05
-	ai.nn_opponent.nn.check_every_n_steps=100 
-
-	ai.max_action=9
-	ai.set_name(name)
-	ai.try_load()
-	return ai
-
 def print_game_from_int(integer):
 	a=qlv2.integer_to_array(integer)
 	b=a[0:9]
 	c=a[9:19]
-	print(b)
-	print(c)
 	print_game(b,c)
 
 def print_game_from_dataset(dataset, idx):
@@ -270,8 +281,10 @@ def save():
 	bob.save()
 
 def load():
-	alice.try_load()
-	bob.try_load() 
+	if alice.try_load():
+		print("alice loaded")
+	if bob.try_load():
+		print("bob loaded")
 
 def print_ai_guess_from_int(integer, action):
 	act=copy.copy(zeros)
@@ -283,12 +296,9 @@ def print_ai_guess_from_int(integer, action):
 	print_game_from_int(res)
 
 
+load()
 
 # the ql that is used. i make it global so i can study it easily
-alice=init_ai("alice")
-bob=init_ai("bob") 
-all_actions=list(range(1,11))
-
 if len(sys.argv)>1:
 	if sys.argv[1]=='test':
 		loop(20000, verbose_detail=True, verbose_games=True, force=True)

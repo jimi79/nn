@@ -272,6 +272,7 @@ class Train:
 						self.save() 
 			if self.params.verbose:
 				print("ended up after %d loops" % cpt)
+		self.save() 
 		return self.params.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example

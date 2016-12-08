@@ -92,3 +92,9 @@ That's why i need two of them. one to learn what impact has my action, and one t
 That's 2 nn per ql.
 
 modify test_ttt to handle the history for both AI
+
+
+
+the second nn doesn't help predicting anythg actually.
+the nn is therefore useless, can't predict the next move of the other one, for some reason. because the other one is playing randomly.
+what if it wasn't? 
