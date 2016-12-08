@@ -252,7 +252,7 @@ class Train:
 		cpt = 0
 
 		if self.test_cost_function():
-			if self.verbose:
+			if self.params.verbose:
 				print("network already ok")
 		else: 
 			if self.params.verbose:

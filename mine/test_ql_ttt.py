@@ -86,15 +86,13 @@ def is_win(list_):
 # that is more like q learning, because you don't loose by your own action. You lose because of other's action
 
 
-def play_AI(ai, ai2, board, board2, h_status, h_actions, verbose=True): 
-	board_before=board+board2
-	available_actions=get_available_actions(list_or(board, board2))
-
+def play_AI(ai, ai2, board, board2, verbose=True): 
+	available_actions=get_available_actions(list_or(board, board2)) 
 	if verbose:
 		print("I ask %s to play" % ai.name)
 	if verbose:
 		print("available actions are %s" % available_actions)
-	action=ai.pick_action(status, available_actions) 
+	action=ai.pick_action(board+board2, available_actions) 
 	board[action]=1 
 	win=is_win(board)
 
@@ -112,11 +110,14 @@ def play_AI(ai, ai2, board, board2, h_status, h_actions, verbose=True):
 		points_ai=100
 		points_ai2=100
 
-	ai.learn_action(board_before, board_after)
-	ai.learn_action(board_before, board_after)
+	ai.learn_action(board+board2)
+	ai2.learn_opponent(board2+board)
 
-
-	h_status.append([board+board2]) # rahhh, history is relative
+	#def learn_points(self, state, points, win):
+	if points_ai != None: 
+		ai.learn_points(board+board2, points_ai, win)
+	if points_ai2 != None: 
+		ai2.learn_points(board2+board, points_ai2, False)
 
 	return tie, win, board, board2
 
@@ -131,27 +132,30 @@ def play(verbose):
 	win=False
 	tie=False
 	cpt=0
-	h_actions=[] #h_ like history
-	h_status=[]
+	history=[]
 	winner=""
 	while (not win) and (not tie):
 		cpt+=1
 		if cpt>22:
 			raise Exception("loop")
-		tie, win, board_alice, board_bob=play_AI(alice, bob, board_alice, board_bob, h_status, h_actions, verbose)
+		tie, win, board_alice, board_bob=play_AI(alice, bob, board_alice, board_bob, verbose)
 		if win:
 			winner="alice"
 		if verbose:
 			print_game(board_alice, board_bob) 
 
+		h=[a+b*2 for a,b in zip(board_alice, board_bob)]
+		history.append(h)
 
 		if (not tie) and (not win):
-			tie, win, board_bob, board_alice=play_AI(bob, alice, board_bob, board_alice, h_status, h_actions, verbose)
+			tie, win, board_bob, board_alice=play_AI(bob, alice, board_bob, board_alice, verbose)
 			if win:
 				winner="bob"
 			if verbose:
 				print_game(board_alice, board_bob) 
 
+			h=[a+b*2 for a,b in zip(board_alice, board_bob)]
+			history.append(h)
 		if tie:
 			winner="tie"
 
@@ -160,9 +164,7 @@ def play(verbose):
 
 	return winner,history
 
-def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False, force=False, verbose_nn=False):
-	global alice
-	global bob
+def loop(count, alice, bob, verbose_games=False, verbose_detail=False, verbose_stats=False, force=False, verbose_training=False):
 	score_bob=0
 	score_alice=0
 	tie=0
@@ -171,12 +173,10 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False, 
 	if verbose_stats==True:
 		verbose_stats=100 # default value 
 
-	alice.verbose=verbose_detail
-	bob.verbose=verbose_detail
-	alice.nn_action.nn.verbose=verbose_nn
-	alice.nn_opponent.nn.verbose=verbose_nn
-	bob.nn_action.nn.verbose=verbose_nn
-	bob.nn_opponent.nn.verbose=verbose_nn
+	alice.set_verbose(verbose_detail)
+	bob.set_verbose(verbose_detail)
+	alice.verbose_training=verbose_training
+	bob.verbose_training=verbose_training
 
 	if count>100:
 		if verbose_detail:
@@ -214,35 +214,33 @@ def loop(count, verbose_games=False, verbose_detail=False, verbose_stats=False, 
 	
 def init_ai(name): 
 	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
-	ai.min_data_to_train=100000 # default value
-	ai.action_max_data_to_train=200000 # default value
-	ai.action_min_cpt_since_last_train=100000 # don't train every time
-	ai.action_cpt_since_last_train=0
-	ai.opponent_max_data_to_train=200000 # default value
-	ai.opponent_min_cpt_since_last_train=100000 # don't train every time
-	ai.opponent_cpt_since_last_train=0
 	ai.verbose=True
 	ai.filename="%s_ttt_ql.tmp" % name
 	ai.logfilename="%s_ttt_ql.log" % name 
 
+	ai.nn_action.min_cpt=1000
+	ai.nn_action.min_data=1000
+	ai.nn_action.max_data=2000 
 	ai.nn_action.verbose=True
-	ai.nn_action.init_syns([27],27,18) # 2 hidden layers 
-	ai.nn_action.nn.filename="%s_ttt_nn_action.tmp" % name
-	ai.nn_action.try_load_synapses() 
-	ai.nn_action.nn.max_cpt=2000
-	ai.nn_action.min_J_cv=0.05
-	ai.nn_action.nn.check_every_n_steps=100
+	ai.nn_action.nn.init_syns([27],27,18) # 2 hidden layers 
+	ai.nn_action.nn.params.filename="%s_ttt_nn_action.tmp" % name
+	ai.nn_action.nn.try_load_synapses() 
+	ai.nn_action.nn.params.max_cpt=2000
+	ai.nn_action.nn.params.min_J_cv=0.05
+	ai.nn_action.nn.params.check_every_n_steps=100
 
-	ai.nn_opponent.verbose=True
-	ai.nn_opponent.init_syns([],18,18) # 2 hidden layers 
-	ai.nn_opponent.nn.filename="%s_ttt_nn_opponent.tmp" % name
-	ai.nn_opponent.try_load_synapses() 
-	ai.nn_opponent.nn.max_cpt=2000
-	ai.nn_opponent.min_J_cv=0.05
+	ai.nn_opponent.min_cpt=1000
+	ai.nn_opponent.min_data=1000
+	ai.nn_opponent.max_data=2000 
+	ai.nn_opponent.nn.params.verbose=True
+	ai.nn_opponent.nn.init_syns([],18,18) # 2 hidden layers 
+	ai.nn_opponent.nn.params.filename="%s_ttt_nn_opponent.tmp" % name
+	ai.nn_opponent.nn.try_load_synapses() 
+	ai.nn_opponent.nn.params.min_J_cv=0.05
 	ai.nn_opponent.nn.check_every_n_steps=100 
 
 	ai.max_action=9
-	ai.setname(name)
+	ai.set_name(name)
 	ai.try_load()
 	return ai
 

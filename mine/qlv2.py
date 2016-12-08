@@ -22,16 +22,15 @@ def integer_to_array(integer):
 		a.append(0)
 	return a
 
-class nn():
-	def __init__(self)
+class NN():
+	def __init__(self):
 		self.cpt=0
 		self.min_cpt=1000
 		self.min_data=1000
 		self.max_data=5000
 		self.X=[]
 		self.y=[]
-		self.nn=Train()
-		self.nn.check_every_n_steps=1000 
+		self.nn=nn.Train()
 		self.nn.params.check_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
 		self.nn.params.save_every_n_steps=1000
 		self.nn.params.verbose=False
@@ -44,7 +43,7 @@ class nn():
 	def add(self, X, y):
 		self.X.append(X)
 		self.y.append(y)
-		if len(self.X) > max_data:
+		if len(self.X) > self.max_data:
 			self.X.pop(0)
 			self.y.pop(0)
 		self.cpt+=1
@@ -57,10 +56,11 @@ class nn():
 			self.nn.datas.raw.X=np.array(self.X)
 			self.nn.datas.raw.y=np.array(self.y)
 			self.nn.datas.split_half() 
-			if not self.name is None:
-				self.append_log("%s training" % self.name)
 			self.nn.train()
 			self.cpt=0 
+			return True
+		else:
+			return False
 
 class Qlearning():
 	def __init__(self, max_state, max_action):
@@ -70,16 +70,21 @@ class Qlearning():
 		self.filename=None
 		self.logfilename=None
 		self.verbose=False 
-		self.nna=Datas()
-		self.nno=Datas()
-		self.nna.min_J_cv=0.01 # easy to see what the outcome is from your own actions
-		self.nno.min_J_cv=1.3 # harder to foresee what the opponent will play
-		self.winlist=[] # index = True if win
-		self.points=[] # index = points
+		self.nn_action=NN()
+		self.nn_opponent=NN()
+		self.nn_action.min_J_cv=0.01 # easy to see what the outcome is from your own actions
+		self.nn_opponent.min_J_cv=1.3 # harder to foresee what the opponent will play
+		self.winlist={} # index = True if win
+		self.points={} # index = points
+		self.restart # init some other variables
 
 	def set_name(self, name):
 		self.name=name
-		self.nn.name=name
+
+	def set_verbose(self, verbose):
+		self.verbose=verbose
+		self.nn_action.nn.params.verbose=verbose
+		self.nn_opponent.nn.params.verbose=verbose
 
 	def append_log(self, text):
 		if not self.logfilename is None:
@@ -89,21 +94,19 @@ class Qlearning():
 			print(text)
 
 	def restart(self): 
-		#self.history_status_ours=[] # will be feed by 'learn'
-		#self.history_status_them=[] # will be feed by 'learn'
-		#self.history_actions_ours=[] # will be feed by 'pick_action'
-		pass
+		self.last_board=None
+		self.last_action=None
 
 	def pick_action(self, state, list_actions):
+		self.last_board=state
 		outputs={} # possible outputs for each action
 		points={} # points available for a given action 
-		s=""
-
+		s="" 
 
 #loop
 
-# first nna, then check if win,feed the win list
-# else: nno, and feed the list of points. update the status points too
+# first nn_action, then check if win,feed the win list
+# else: nn_opponent, and feed the list of points. update the status points too
 
 # if win, put in wins list
 # if points=None, put in donknow list
@@ -128,17 +131,23 @@ class Qlearning():
 			a=np.zeros(self.max_action)
 			a[i]=1 
 			input_=np.concatenate([state, a]) # input should be a line
-			res=self.nna.FP(input_)
+			res=self.nn_action.nn.FP(input_)
 			output=res>=0.5
 			outputs[i]=output # it is a matrice here 
 			new_state=array_to_integer(output)
 
-			if not self.winlist.get(new_state)
+			p=None
+			if not self.winlist.get(new_state) is None:
+				ps="win"
 				n_winlist.append(i)
 			else:
 				p=self.points.get(new_state)
+				ps="?"
 				if not p is None:
+					ps=str(p)
 					if p > 0:
+						if n_maxpoint_pos is None:
+							n_maxpoint_pos=p
 						if p > n_maxpoint_pos: 
 							n_maxpoint_pos=p
 							n_willwin=[]
@@ -152,49 +161,65 @@ class Qlearning():
 						n_willlose.append(i)
 				else:
 					n_dontknow.append(i) 
-			self.append_log("%d+%d=%d(%s points)," % (array_to_integer(state),i,new_state,p)) # %s to handle None
 
+			self.append_log("%d+%d=%d(%s points)" % (array_to_integer(state),i,new_state,ps)) # %s to handle None 
 
 		action=None
 		if len(n_winlist)!=0:
 			action=random.choice(n_winlist)
-			text="winning action %d" % action)
+			text="%s picks winning action %d" % (self.name, action)
 		else:
 			if len(n_willwin)!=0:
 				action=random.choice(n_willwin)
-				text="i pick the best action %d for %d points" % (action, n_maxpoint_pos))
+				text="%s picks the best action %d for %d points" % (self.name, action, n_maxpoint_pos)
 			else:
 				if len(n_dontknow)!=0:
-					action=random.choice(n_willwin)
-					text="i pick the unknown action %d" % (action, n_maxpoint_neg)) 
+					action=random.choice(n_dontknow)
+					text="i picks the unknown action %d" % (action)
 				else:
 					if len(n_willlose)!=0:
 						action=random.choice(n_willlose)
-						text="i pick the less bad action %d, for %d points" % (action, n_maxpoint_neg)) 
+						text="%s picks the less bad action %d, for %d points" % (self.name, action, n_maxpoint_neg)
 		self.append_log(text)
+		self.last_action=action
 		return action
 
-	def learn_action(self, oldstate, action, newstate): 
+	def learn_action(self, newstate): 
 		a=np.zeros(self.max_action) 
-		a[self.history_actions[-1]]=1
-		input_=np.concatenate(oldstate, a]) # input should be a line
+		a[self.last_action]=1
+		input_=np.concatenate([self.last_board, a]) # input should be a line
 		output=newstate 
-		nna.dd(input_, output) 
-		nna.train_if_needed()
-	
-	def learn_opponent(self, oldstate, newstate, points=None): 
-		input_=oldstate
-		output=newstate 
-		nno.dd(input_, output) 
-		nno.train_if_needed()
+		self.nn_action.add(input_, output) 
+		if self.nn_action.train_if_needed():
+			if self.verbose_training:
+				if not self.name is None:
+					print("%s training with nn_action, j_cv=%.04f" % (self.name,self.nn_action.nn.check(self.nn_action.nn.datas.cvset)))
 
-	def learn_points(self, state, points, win): # which state is it ? Whatever, it's the state that you should aim for. But then, that is an issue, because that state can be reach either by me directly or by me and after the opponent plays
+		self.last_board=newstate
+		self.append_log('I learn that %d with action %d leads to %d' % (array_to_integer(self.last_board), self.last_action, array_to_integer(newstate)))
+	
+	def learn_opponent(self, newstate): 
+		if self.last_board != None:
+			input_=self.last_board
+			output=newstate 
+			self.nn_opponent.add(input_, output) 
+			if self.nn_opponent.train_if_needed(): 
+				if self.verbose_training:
+					if not self.name is None:
+						print("%s training with nn_opponents, j_cv=%0.4f" % (self.name,self.nn_opponent.nn.check(self.nn_opponent.nn.datas.cvset)))
+			self.append_log('I learn that %d and the opponent playing leads to %d' % (array_to_integer(self.last_board), array_to_integer(newstate)))
+			return True
+		else:
+			return False
+
+	def learn_points(self, state, points, win):
 		state=array_to_integer(state)
-		self.append_log("state %d is worth %d" % (array_to_integer(newstate), points))
+		self.append_log("state %d is worth %d" % (state, points))
 		if self.verbose:
-			print("I've got to remember that the state %d is worth %d" % (array_to_integer(newstate), points))
-		self.array_points[state]=points 
-		self.array_wins.append(state)
+			print("I've got to remember that the state %d is worth %d" % (state, points))
+		self.points[state]=points 
+		if win:
+			self.winlist[state]=True
 
 	def save(self):
 		pickle.dump(self.array_points, open(self.filename, 'wb'))
