@@ -276,7 +276,7 @@ class Train:
 		return self.params.syns.vals
 
 	def ascii(self, val): # val = self.trainset[0] for example
-		a = val.reshape(20,20) > 0.5
+		a = val.reshape(20,20) >= 0.5
 		for i in a:
 			for j in i:
 				if j == True:

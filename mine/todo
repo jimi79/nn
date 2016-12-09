@@ -98,3 +98,7 @@ modify test_ttt to handle the history for both AI
 the second nn doesn't help predicting anythg actually.
 the nn is therefore useless, can't predict the next move of the other one, for some reason. because the other one is playing randomly.
 what if it wasn't? 
+
+
+Il faut une option pour faire du online. Ce qui veut dire que dans ce cas, on a une nouvelle fonction ds nn. Le train-if-needed sera dans le add, et le add sera process. et l'option sera au niveau du nn.
+
