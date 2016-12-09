@@ -40,6 +40,7 @@ def init_ai(name):
 	ai.nn_action.min_data=1000
 	ai.nn_action.max_data=2000 
 	ai.nn_action.online=True
+	ai.nn_opponent.nn.params.lambda_=0
 	ai.nn_action.nn.params.verbose=True
 	ai.nn_action.nn.init_syns([27],27,18) # 2 hidden layers 
 	ai.nn_action.nn.params.filename="%s_ttt_nn_action.tmp" % name
@@ -52,6 +53,7 @@ def init_ai(name):
 	ai.nn_opponent.min_data=5000
 	ai.nn_opponent.max_data=20000 
 	ai.nn_opponent.online=True
+	ai.nn_opponent.nn.params.lambda_=0
 	ai.nn_opponent.nn.params.verbose=True
 	ai.nn_opponent.nn.init_syns([],18,18) # 2 hidden layers 
 	ai.nn_opponent.nn.params.filename="%s_ttt_nn_opponent.tmp" % name
@@ -147,8 +149,8 @@ def play_AI(ai, ai2, board, board2, verbose=True):
 		points_ai=1000
 		points_ai2=-1000
 	if tie:
-		points_ai=100
-		points_ai2=100
+		points_ai=-100
+		points_ai2=-100 # a tie isn't good
 
 	ai.learn_action(board+board2)
 	ai2.learn_opponent(board2+board)
