@@ -34,10 +34,12 @@ def init_ai(name):
 	ai.verbose=True
 	ai.filename="%s_ttt_ql.tmp" % name
 	ai.logfilename="%s_ttt_ql.log" % name 
+	ai.random=False
 
 	ai.nn_action.min_cpt=1000
 	ai.nn_action.min_data=1000
 	ai.nn_action.max_data=2000 
+	ai.nn_action.online=True
 	ai.nn_action.nn.params.verbose=True
 	ai.nn_action.nn.init_syns([27],27,18) # 2 hidden layers 
 	ai.nn_action.nn.params.filename="%s_ttt_nn_action.tmp" % name
@@ -49,6 +51,7 @@ def init_ai(name):
 	ai.nn_opponent.min_cpt=5000
 	ai.nn_opponent.min_data=5000
 	ai.nn_opponent.max_data=20000 
+	ai.nn_opponent.online=True
 	ai.nn_opponent.nn.params.verbose=True
 	ai.nn_opponent.nn.init_syns([],18,18) # 2 hidden layers 
 	ai.nn_opponent.nn.params.filename="%s_ttt_nn_opponent.tmp" % name

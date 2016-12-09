@@ -63,13 +63,19 @@ class NN():
 			return False
 
 	def process(self, X, y): # process will add and train if needed
-		self.X.append(X)
-		self.y.append(y)
-		if len(self.X) > self.max_data:
-			self.X.pop(0)
-			self.y.pop(0)
-		self.cpt+=1
-		self.train_if_needed() 
+		if self.online:
+			X=np.array(X)
+			y=np.array(y)
+			self.nn.FP(X)
+			self.nn.BP(y) 
+		else: 
+			self.X.append(X)
+			self.y.append(y)
+			if len(self.X) > self.max_data:
+				self.X.pop(0)
+				self.y.pop(0)
+			self.cpt+=1
+			self.train_if_needed() 
 
 class Qlearning():
 	def __init__(self, max_state, max_action):
