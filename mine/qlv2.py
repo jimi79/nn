@@ -141,6 +141,7 @@ class Qlearning():
 				p=1000
 			else: 
 				res_op=self.nn_opponent.nn.FP(output) 
+				res_op=res_op>0.5
 				new_state=array_to_integer(res_op) 
 				p=self.points.get(new_state)
 				ps="?"
@@ -178,19 +179,31 @@ class Qlearning():
 
 		action=None
 		if len(n_winlist)!=0:
-			action=random.choice(n_winlist)
+			if self.random:
+				action=random.choice(n_winlist)
+			else:
+				action=n_winlist[0]
 			text="%s picks winning action %d" % (self.name, action)
 		else:
 			if len(n_willwin)!=0:
-				action=random.choice(n_willwin)
+				if self.random:
+					action=random.choice(n_willwin)
+				else:
+					action=n_willwin[0]
 				text="%s picks the best action %d for %d points" % (self.name, action, n_maxpoint_pos)
 			else:
 				if len(n_dontknow)!=0:
-					action=random.choice(n_dontknow)
+					if self.random:
+						action=random.choice(n_dontknow)
+					else:
+						action=n_dontknow[0]
 					text="i picks the unknown action %d" % (action)
 				else:
 					if len(n_willlose)!=0:
-						action=random.choice(n_willlose)
+						if self.random:
+							action=random.choice(n_willlose)
+						else:
+							action=n_willlose[0]
 						text="%s picks the less bad action %d, for %d points" % (self.name, action, n_maxpoint_neg)
 		self.append_log(text)
 		self.last_action=action
