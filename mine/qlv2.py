@@ -127,6 +127,7 @@ class Qlearning():
 		n_maxpoint=None
 		n_dontknow=[] # 
 		n_willlose=[] # that action leads to a possible loss
+		eval_debug=[]
 		for i in list_actions: 
 			a=np.zeros(self.max_action)
 			a[i]=1 
@@ -164,13 +165,17 @@ class Qlearning():
 				else:
 					n_dontknow.append(i) 
 
-			self.append_log("%d+%d=%d(%s points)" % (array_to_integer(state),i,new_state,ps)) # %s to handle None 
+			eval_debug.append("%d+%d=%d(%s points)" % (array_to_integer(state),i,new_state,ps))
+
 			if not p is None:
 				if n_maxpoint is None:
 					n_maxpoint=p
 				else:
 					if p > n_maxpoint:
 						n_maxpoint=p
+
+
+		self.append_log(','.join(eval_debug))
 
 		if not n_maxpoint is None:
 			val=self.alpha*n_maxpoint
@@ -197,7 +202,7 @@ class Qlearning():
 						action=random.choice(n_dontknow)
 					else:
 						action=n_dontknow[0]
-					text="i picks the unknown action %d" % (action)
+					text="%s picks the unknown action %d" % (self.name, action)
 				else:
 					if len(n_willlose)!=0:
 						if self.random:
@@ -215,16 +220,15 @@ class Qlearning():
 		input_=np.concatenate([self.last_board, a]) # input should be a line
 		output=newstate 
 		self.nn_action.process(input_, output) 
-
+		self.append_log('%s learns that %d with action %d leads to %d' % (self.name, array_to_integer(self.last_board), self.last_action, array_to_integer(newstate)))
 		self.last_board=newstate
-		self.append_log('I learn that %d with action %d leads to %d' % (array_to_integer(self.last_board), self.last_action, array_to_integer(newstate)))
 	
 	def learn_opponent(self, newstate): 
 		if self.last_board != None:
 			input_=self.last_board
 			output=newstate 
 			self.nn_opponent.process(input_, output) 
-			self.append_log('I learn that %d and the opponent playing leads to %d' % (array_to_integer(self.last_board), array_to_integer(newstate)))
+			self.append_log('%s learns that %d and the opponent playing leads to %d' % (self.name, array_to_integer(self.last_board), array_to_integer(newstate)))
 			return True
 		else:
 			return False
@@ -233,7 +237,7 @@ class Qlearning():
 		state=array_to_integer(state)
 		self.append_log("state %d is worth %d" % (state, points))
 		if self.verbose:
-			print("I've got to remember that the state %d is worth %d" % (state, points))
+			print("%s has got to remember that the state %d is worth %d" % (self.name, state, points))
 		self.points[state]=points 
 		if win:
 			self.winlist[state]=True

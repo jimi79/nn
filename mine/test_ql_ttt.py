@@ -29,6 +29,9 @@ import qlv2
 import sys
 import numpy as np
 
+
+short_display=True
+
 def init_ai(name): 
 	ai=qlv2.Qlearning(27,9) # input is check for alice, and bob, and an action
 	ai.verbose=True
@@ -86,11 +89,16 @@ all_actions=list(range(1,11))
 
 def print_game(alice, bob):
 	c=["X" if alice[i]==1 else "O" if bob[i]==1 else " " for i in range(9)]
-	print("%s│%s│%s" % (c[0],c[1],c[2]))
-	print("─┼─┼─")
-	print("%s│%s│%s" % (c[3],c[4],c[5]))
-	print("─┼─┼─")
-	print("%s│%s│%s" % (c[6],c[7],c[8]))
+	if short_display: 
+		print("%s%s%s" % (c[0],c[1],c[2]))
+		print("%s%s%s" % (c[3],c[4],c[5]))
+		print("%s%s%s" % (c[6],c[7],c[8]))
+	else: 
+		print("%s│%s│%s" % (c[0],c[1],c[2]))
+		print("─┼─┼─")
+		print("%s│%s│%s" % (c[3],c[4],c[5]))
+		print("─┼─┼─")
+		print("%s│%s│%s" % (c[6],c[7],c[8]))
 
 def print_history(array, winner=None):
 	for i in range(3):
@@ -130,10 +138,6 @@ def is_win(list_):
 
 def play_AI(ai, ai2, board, board2, verbose=True): 
 	available_actions=get_available_actions(list_or(board, board2)) 
-	if verbose:
-		print("I ask %s to play" % ai.name)
-	if verbose:
-		print("available actions are %s" % available_actions)
 	action=ai.pick_action(board+board2, available_actions) 
 	board[action]=1 
 	win=is_win(board)
@@ -204,7 +208,7 @@ def play(verbose):
 
 	return winner,history
 
-def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, force=None, verbose_training=None):
+def loop(count, verbose_history=None, verbose_detail=None, verbose_stats=None, force=None, verbose_training=None):
 	score_bob=0
 	score_alice=0
 	tie=0
@@ -212,8 +216,8 @@ def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, for
 	duration=0
 	if verbose_stats==None:
 		verbose_stats=1000
-	if verbose_games is None:
-		verbose_games=count<101
+	if verbose_history is None:
+		verbose_history=count<101
 	if verbose_detail is None:
 		verbose_detail=count<11
 	if verbose_training is None:
@@ -234,12 +238,14 @@ def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, for
 				print("are you sure u want detail for more than 100 iterations ? use force=True then")
 				return
 		if count > 1000:
-			if verbose_games:
+			if verbose_history:
 				if not force:
 					print("are you sure u want the history for more than 1000 iterations ? use force=True then")
 					return
 
 	for i in range(count):
+		if verbose_detail:
+			print("----------------------------------------------------------------------------------------------------------")
 		stats+=1
 		winner,history=play(verbose_detail)
 		duration+=len(history)
@@ -250,7 +256,7 @@ def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, for
 		if winner=="bob":
 			score_bob+=1
 
-		if verbose_games:
+		if verbose_history:
 			print_history(history,winner)
 
 		if stats==verbose_stats:
@@ -306,4 +312,4 @@ load()
 # the ql that is used. i make it global so i can study it easily
 if len(sys.argv)>1:
 	if sys.argv[1]=='test':
-		loop(20000, verbose_detail=True, verbose_games=True, force=True)
+		loop(20000, verbose_detail=True, verbose_history=True, force=True)
