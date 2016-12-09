@@ -206,22 +206,22 @@ def loop(count, verbose_games=None, verbose_detail=None, verbose_stats=None, for
 	stats=0
 	duration=0
 	if verbose_stats==None:
-		verbose_stats=1000 # default value 
-
+		verbose_stats=1000
 	if verbose_games is None:
 		verbose_games=count<101
 	if verbose_detail is None:
 		verbose_detail=count<11
-	if verbose_stats is None:
-		verbose_stats=True
 	if verbose_training is None:
 		verbose_training=count<101
 
 
 	alice.set_verbose(verbose_detail)
 	bob.set_verbose(verbose_detail)
-	alice.verbose_training=verbose_training
-	bob.verbose_training=verbose_training
+
+	alice.nn_action.verbose=verbose_training
+	alice.nn_opponent.verbose=verbose_training
+	bob.nn_action.verbose=verbose_training
+	bob.nn_opponent.verbose=verbose_training
 
 	if count>100:
 		if verbose_detail:

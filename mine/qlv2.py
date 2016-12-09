@@ -23,14 +23,18 @@ def integer_to_array(integer):
 	return a
 
 class NN():
-	def __init__(self):
+	def __init__(self,typename):
 		self.cpt=0
 		self.min_cpt=1000
 		self.min_data=1000
 		self.max_data=5000
 		self.X=[]
 		self.y=[]
+		self.name="unknown"
+		self.online=False
 		self.nn=nn.Train()
+		self.typename=typename
+		self.nn.name="unknown"
 		self.nn.params.check_every_n_steps=1000 # we check cost functione very 1000 steps, but that doesn't apply here anyway, because we won't use train
 		self.nn.params.save_every_n_steps=1000
 		self.nn.params.verbose=False
@@ -38,29 +42,34 @@ class NN():
 		self.nn.params.max_cpt=1000 
 		self.nn.params.filename=None
 		self.nn.params.alpha=1
-		self.nn.params.lambda_=3 
+		self.nn.params.lambda_=0 # 0 for online, 3 for offline
 
-	def add(self, X, y):
+	def should_i_train(self):
+		return (self.cpt>self.min_cpt) and (len(self.X)>self.min_data)
+
+	def train_if_needed(self):
+		if self.should_i_train():
+			if self.verbose:
+				print("%s is training the %s nn" % (self.name, self.typename))
+			self.nn.datas.raw.X=np.array(self.X)
+			self.nn.datas.raw.y=np.array(self.y)
+			self.nn.datas.split_half() 
+			self.nn.train()
+			if self.verbose:
+				print("Jcv = %0.4f" % self.nn.check(self.nn.datas.cvset))
+			self.cpt=0 
+			return True
+		else:
+			return False
+
+	def process(self, X, y): # process will add and train if needed
 		self.X.append(X)
 		self.y.append(y)
 		if len(self.X) > self.max_data:
 			self.X.pop(0)
 			self.y.pop(0)
 		self.cpt+=1
-	
-	def should_i_train(self):
-		return (self.cpt>self.min_cpt) and (len(self.X)>self.min_data)
-
-	def train_if_needed(self):
-		if self.should_i_train():
-			self.nn.datas.raw.X=np.array(self.X)
-			self.nn.datas.raw.y=np.array(self.y)
-			self.nn.datas.split_half() 
-			self.nn.train()
-			self.cpt=0 
-			return True
-		else:
-			return False
+		self.train_if_needed() 
 
 class Qlearning():
 	def __init__(self, max_state, max_action):
@@ -70,8 +79,8 @@ class Qlearning():
 		self.filename=None
 		self.logfilename=None
 		self.verbose=False 
-		self.nn_action=NN()
-		self.nn_opponent=NN()
+		self.nn_action=NN("action")
+		self.nn_opponent=NN("opponent")
 		self.nn_action.min_J_cv=0.01 # easy to see what the outcome is from your own actions
 		self.nn_opponent.min_J_cv=1.3 # harder to foresee what the opponent will play
 		self.winlist={} # index = True if win
@@ -80,10 +89,14 @@ class Qlearning():
 
 	def set_name(self, name):
 		self.name=name
+		self.nn_action.name=name
+		self.nn_opponent.name=name
 
 	def set_verbose(self, verbose):
 		self.verbose=verbose
+		self.nn_action.verbose=verbose
 		self.nn_action.nn.params.verbose=verbose
+		self.nn_opponent.verbose=verbose
 		self.nn_opponent.nn.params.verbose=verbose
 
 	def append_log(self, text):
@@ -182,11 +195,7 @@ class Qlearning():
 		a[self.last_action]=1
 		input_=np.concatenate([self.last_board, a]) # input should be a line
 		output=newstate 
-		self.nn_action.add(input_, output) 
-		if self.nn_action.train_if_needed():
-			if self.verbose_training:
-				if not self.name is None:
-					print("%s training with nn_action, j_cv=%.04f" % (self.name,self.nn_action.nn.check(self.nn_action.nn.datas.cvset)))
+		self.nn_action.process(input_, output) 
 
 		self.last_board=newstate
 		self.append_log('I learn that %d with action %d leads to %d' % (array_to_integer(self.last_board), self.last_action, array_to_integer(newstate)))
@@ -195,11 +204,7 @@ class Qlearning():
 		if self.last_board != None:
 			input_=self.last_board
 			output=newstate 
-			self.nn_opponent.add(input_, output) 
-			if self.nn_opponent.train_if_needed(): 
-				if self.verbose_training:
-					if not self.name is None:
-						print("%s training with nn_opponents, j_cv=%0.4f" % (self.name,self.nn_opponent.nn.check(self.nn_opponent.nn.datas.cvset)))
+			self.nn_opponent.process(input_, output) 
 			self.append_log('I learn that %d and the opponent playing leads to %d' % (array_to_integer(self.last_board), array_to_integer(newstate)))
 			return True
 		else:
