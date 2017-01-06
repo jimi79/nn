@@ -1,0 +1,26 @@
+I notice that, to have an online that adapts quickly, alpha doesn't seem to matter much (not sure), but what i notice is that if lambda is high, then it takes an inifine time to learn somethg.
+
+example :
+
+nn_=t.test3()
+nn_.params.lambda_=1
+t.test5(nn_,2) # trying to learn two values, by doing FP then BP if necesseary, till it doesn't need any BP to give the correct value
+# always fail
+
+nn_.params.lambda_=0
+t.test5(nn_,4) # success in 24 loop, or 9, or 363, dpds
+t.test5(nn_,5) # success in 1223 loop (not always)
+
+No matter what the layout of the nn is
+
+
+
+
+
+Variables :
+lambda_ : pretty low, like 0, is better
+alpha : doesn't seem to matter much, as long as != 0
+layout nn : doesn't matter much 
+size of input/ouput : the bigger it is, the easier it is to create a nn that knows how to distinguish values. Which is logical, as 5 random stuff when size is like 3 are actually probably less different than if size=100
+
+meaning that i could try online. and i would add somethg in test_ttt to tell me if the network was right or true.

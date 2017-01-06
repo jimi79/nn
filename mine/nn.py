@@ -52,7 +52,6 @@ def add_ones(X):
 		size=X.shape[0]
 		return np.column_stack([np.ones([size,1]),X])
 
-	
 def sigmoidGradient(X):
 	g=expit(X) 
 	return g*(1-g); 
@@ -63,8 +62,8 @@ class Set:
 		self.y = y
 
 	def import_csv(self, directory): 
-		self.X = np.genfromtxt(directory + '/X.csv', delimiter=',')
-		self.y = np.genfromtxt(directory + '/y.csv', delimiter=',') 
+		self.X = np.genfromtxt(directory + 'X.csv', delimiter=',')
+		self.y = np.genfromtxt(directory + 'y.csv', delimiter=',') 
 
 class Layer:
 	def __init__(self):
@@ -134,9 +133,6 @@ class Syns:
 
 		countlayers = len(self.vals) # we count the number of synapses to define our laters. Layers arejust for FP and BP
 		datalayers = [Layer() for i in range(countlayers + 1)] # layer0 = X, layer1 = layer0 * syn0
-
-
-
 
 	def save(self, filename):
 		pickle.dump(self.vals, open(filename, "wb"))

@@ -1,0 +1,6 @@
+to test :
+rm *.csv
+python3 -i test_nn.py
+> s=a.train() # will train the NN
+> test(a,1,2,3) # will try to multiply 1 and 2
+
