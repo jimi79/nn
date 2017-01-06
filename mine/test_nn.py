@@ -34,7 +34,7 @@ def datas(count, maxval, binsize):
 		a = random.randrange(1,maxval)
 		b = random.randrange(1,maxval)
 		c = random.randrange(1,maxval)
-		d = a % b + c  # the result expected is a+b because i know that works (later will try again somethg more complicated)
+		d = a % b  # the result expected is a+b because i know that works (later will try again somethg more complicated)
 # le résultat attendu : d= a+b (d c'est le résultat)
 		X1 = [a, b, c]
 		if i == 0:
